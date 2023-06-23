@@ -27,21 +27,33 @@ pico_sdk_init()
 
 ####################
 
-if (TARGET tinyusb_device)
-    add_executable(hello_usb
-            hello_usb.c
-            )
+add_executable(my_proj
+        main.c
+        )
 
-    # pull in common dependencies
-    target_link_libraries(hello_usb pico_stdlib)
+# pull in common dependencies
+target_link_libraries(my_proj pico_stdlib)
 
-    # enable usb output, disable uart output
-    pico_enable_stdio_usb(hello_usb 1)
-    pico_enable_stdio_uart(hello_usb 0)
+# enable usb output, disable uart output
+pico_enable_stdio_usb(my_proj 1)
+pico_enable_stdio_uart(my_proj 0)
 
-    # create map/bin/hex/uf2 file etc.
-    pico_add_extra_outputs(hello_usb)
 
-elseif(PICO_ON_DEVICE)
-    message(WARNING "not building hello_usb because TinyUSB submodule is not initialized in the SDK")
-endif()
+
+target_compile_definitions(my_proj PRIVATE
+        WIFI_SSID=\"${WIFI_SSID}\"
+        WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
+        )
+
+target_include_directories(my_proj PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}
+        )
+target_link_libraries(my_proj
+        pico_cyw43_arch_lwip_threadsafe_background
+        pico_stdlib
+        )
+
+# create map/bin/hex/uf2 file etc.
+pico_add_extra_outputs(my_proj)
+
+
