@@ -7,7 +7,7 @@ project_name := my_proj
 upload: build/$(project_name).uf2
 	picotool load -f build/$(project_name).uf2
 
-serial:
+monitor:
 	tio /dev/$$(ls /dev | grep tty.usbmodem)
 
 build:
