@@ -37,10 +37,71 @@
 #include "lwip/pbuf.h"
 #include "lwip/udp.h"
 
-#define UDP_PORT 4444
+#define UDP_PORT 8850
 #define BEACON_MSG_LEN_MAX 127
-#define BEACON_TARGET "255.255.255.255"
+#define BEACON_TARGET "192.168.4.247"
 #define BEACON_INTERVAL_MS 1000
+
+
+void udp_recv_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port) {
+    /* We have received a packet, process it. */
+    if (p != NULL) {
+        char *rec = (char *)p->payload;
+        printf("Received packet: %s\n", rec);
+
+        /* Free the pbuf */
+        pbuf_free(p);
+    }
+}
+
+void run_udp_receiver() {
+    struct udp_pcb* pcb = udp_new();
+    if (pcb == NULL) {
+        printf("Failed to create new UDP PCB.\n");
+        return;
+    }
+
+    err_t er = udp_bind(pcb, IP_ADDR_ANY, UDP_PORT);
+    if (er != ERR_OK) {
+        printf("Failed to bind to the port! error=%d", er);
+        return;
+    }
+
+    /* set recv callback for any new udp packets that arrive at the port */
+    udp_recv(pcb, udp_recv_callback, NULL);
+
+}
+
+
+void run_udp_beacon() {
+    struct udp_pcb* pcb = udp_new();
+
+    ip_addr_t addr;
+    ipaddr_aton(BEACON_TARGET, &addr);
+
+    int counter = 0;
+    while (true) {
+
+
+        struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, BEACON_MSG_LEN_MAX+1, PBUF_RAM);
+        char *req = (char *)p->payload;
+        memset(req, 0, BEACON_MSG_LEN_MAX+1);
+        snprintf(req, BEACON_MSG_LEN_MAX, "%d\n", counter);
+        err_t er = udp_sendto(pcb, p, &addr, UDP_PORT);
+        pbuf_free(p);
+        if (er != ERR_OK) {
+            printf("Failed to send UDP packet! error=%d", er);
+        } else {
+            printf("Sent packet %d\n", counter);
+            counter++;
+        }
+
+        // if you are not using pico_cyw43_arch_poll, then WiFI driver and lwIP work
+        // is done via interrupt in the background. This sleep is just an example of some (blocking)
+        // work you might be doing.
+        sleep_ms(BEACON_INTERVAL_MS);
+    }
+}
 
 
 int main() {
@@ -52,6 +113,10 @@ int main() {
     }
     cyw43_arch_enable_sta_mode();
 
+    printf("before ");
+    printf(WIFI_SSID);
+    printf(" after\n");
+
     printf("Connecting to Wi-Fi...\n");
     if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000)) {
         printf("failed to connect.\n");
@@ -60,7 +125,8 @@ int main() {
         printf("Connected.\n");
     }
 
-
+    run_udp_receiver();
+    run_udp_beacon();
 
     while (true) {
         printf("Hello, world!\n");

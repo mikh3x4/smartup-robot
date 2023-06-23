@@ -32,13 +32,15 @@ add_executable(my_proj
         )
 
 # pull in common dependencies
-target_link_libraries(my_proj pico_stdlib)
+# target_link_libraries(my_proj pico_stdlib)
 
 # enable usb output, disable uart output
 pico_enable_stdio_usb(my_proj 1)
 pico_enable_stdio_uart(my_proj 0)
 
 
+set(WIFI_SSID $ENV{WIFI_SSID})
+set(WIFI_PASSWORD $ENV{WIFI_PASSWORD})
 
 target_compile_definitions(my_proj PRIVATE
         WIFI_SSID=\"${WIFI_SSID}\"
