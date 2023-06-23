@@ -53,6 +53,7 @@ target_include_directories(my_proj PRIVATE
 target_link_libraries(my_proj
         pico_cyw43_arch_lwip_threadsafe_background
         pico_stdlib
+        pico_multicore
         )
 
 # create map/bin/hex/uf2 file etc.

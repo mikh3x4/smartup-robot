@@ -42,6 +42,23 @@
 #define BEACON_TARGET "192.168.4.247"
 #define BEACON_INTERVAL_MS 1000
 
+#include "pico/multicore.h"
+
+void core1_entry() {
+
+    // multicore_fifo_push_blocking(FLAG_VALUE);
+    // uint32_t g = multicore_fifo_pop_blocking();
+
+
+    while (1){
+        // tight_loop_contents();
+        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
+        sleep_ms(250);
+        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
+        sleep_ms(250);
+    }
+}
+
 
 void udp_recv_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port) {
     /* We have received a packet, process it. */
@@ -124,6 +141,9 @@ int main() {
     } else {
         printf("Connected.\n");
     }
+
+
+    multicore_launch_core1(core1_entry);
 
     run_udp_receiver();
     run_udp_beacon();
