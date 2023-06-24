@@ -28,7 +28,7 @@ pico_sdk_init()
 ####################
 
 add_executable(my_proj
-        main.c
+        main.cpp
         )
 
 # pull in common dependencies

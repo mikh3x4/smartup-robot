@@ -44,6 +44,13 @@
 
 #include "pico/multicore.h"
 
+// testing cpp features
+class Geeks {
+public:
+    char* geekname;
+    void printname() { printf("testing"); }
+};
+
 void core1_entry() {
 
     // multicore_fifo_push_blocking(FLAG_VALUE);
