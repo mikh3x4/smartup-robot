@@ -44,12 +44,55 @@
 
 #include "pico/multicore.h"
 
+#include "jsnm.h"
+#include "command.hpp"
+
 // testing cpp features
 class Geeks {
 public:
     char* geekname;
     void printname() { printf("testing"); }
 };
+
+
+
+char incoming[] = "{"
+" \"s\": [ null, null, 91, null], "
+" \"m\": [ null, [\"pwr\", 255], [\"spd\", 50], null], "
+" \"led\": [ 255, 100, 0, 0], "
+    "}";
+
+
+
+class ParseJSON{
+
+    jsmn_parser p;
+    jsmntok_t t[128];
+    jsmntok_t * current;
+
+    void parse_message(){
+
+    }
+
+    void parse_motor(){
+    }
+
+    void parse_servo(){
+
+        switch (current->type){
+            JSMN_PRIMITIVE:
+            default:
+        }
+    }
+
+    void parse_led(){
+        switch (current->type){
+            JSMN_PRIMITIVE:
+            default:
+        }
+    }
+}
+
 
 void core1_entry() {
 
