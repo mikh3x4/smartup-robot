@@ -1,6 +1,6 @@
 
 
-.PHONY: upload build setup_cmake serial
+.PHONY: upload build setup_cmake monitor clean
 
 project_name := my_proj
 
@@ -15,4 +15,7 @@ build:
 
 cmake_setup:
 	mkdir build; cd build; cmake ..
+
+clean:
+	rm -rf ./build/
 
