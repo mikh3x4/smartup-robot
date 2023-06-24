@@ -1,55 +1,66 @@
-# print("hello")
+def test():
+    print("hello")
 
-# from machine import Pin
-# led = Pin("LED", Pin.OUT)
-#
-# led.toggle()
-# led.toggle()
-#
-SSID = "Hamiltopia"
-PASS = "1001dalmatians"
+    from machine import Pin
+    import machine
+    # led = Pin("LED", Pin.OUT)
+    #
+    # led.toggle()
+    # led.toggle()
+    #
+    SSID = "Hamiltopia"
+    PASS = "1001dalmatians"
 
-import network
-import time
+    import network
+    import time
+    import socket
 
-wlan = network.WLAN(network.STA_IF)
-wlan.active(True)
-wlan.connect(SSID, PASS)
-wlan.isconnected()
-wlan.ifconfig()
+    import ujson as json
 
-#
-# import urequests
-# astronauts = urequests.get("http://api.open-notify.org/astros.json").json()
-# astronauts
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.connect(SSID, PASS)
+    wlan.isconnected()
+    wlan.ifconfig()
 
-import socket
-import time
+    # import urequests
+    # astronauts = urequests.get("http://api.open-notify.org/astros.json").json()
+    # astronauts
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.settimeout(0.0)
-sock.bind(("", 8850))
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-#the pico's udp recv buffer is one message long??
+    sock.settimeout(0.0)
+    sock.bind(("0.0.0.0", 8850))
 
-address = None
+    #the pico's udp recv buffer is one message long??
 
-message_count = 0
-while True:
+    adc = machine.ADC(26)
+
+    def return_json(a = [0]):
+        a[0] += 1
+        return {"imu": "test_data", "count": a, "vbat": adc.read_u16() }
+
+    
+
+    address = None
+    message_count = 0
     while True:
-        try:
-            last_data, address = sock.recvfrom(1024)
-            print("got data")
-            message_count += 1
-        except OSError as e:
-            print(e)
-            break
-    print("here")
-    if address != None:
-        sock.connect(address)
-        sock.send(b"reply_"+str(message_count).encode())
-        print("sent")
-    time.sleep(0.1)
+        while True:
+            try:
+                last_data, address = sock.recvfrom(1024)
+                message = json.loads(last_data.decode())
+                print("got data", message)
+                message_count += 1
+            except OSError as e:
+                # print(e)
+                break
+        print("here")
+        if address != None:
+            # sock.connect(address)
+            sock.sendto( json.dumps(return_json()).encode() ,address)
+            print("sent")
+        time.sleep(0.1)
 
 
 
