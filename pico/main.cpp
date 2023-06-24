@@ -262,6 +262,14 @@ class Sensors {
     public:
         long encoders[4];
         float v_bat;
+        bool motor_done[4];
+        long settings_version;
+
+    void encoder_json(char *js, size_t len){
+
+        snprintf(js, len, " { \" vbat \" : \"%f\"  } ", v_bat );
+
+    }
 };
 
 class MainData {
