@@ -30,6 +30,8 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+
 #include "pico/stdlib.h"
 
 #include "pico/cyw43_arch.h"
@@ -47,66 +49,150 @@
 #include "jsnm.h"
 #include "command.hpp"
 
-// testing cpp features
-class Geeks {
-public:
-    char* geekname;
-    void printname() { printf("testing"); }
-};
+#include <string.h>
+
+
 
 
 
 char incoming[] = "{"
 " \"s\": [ null, null, 91, null], "
-" \"m\": [ null, [\"pwr\", 255], [\"spd\", 50], null], "
 " \"led\": [ 255, 100, 0, 0], "
     "}";
 
+// " \"m\": [ null, [\"pwr\", 255], [\"spd\", 50], null], "
 
-
-class ParseJSON{
-
-    jsmn_parser p;
-    jsmntok_t t[128];
-    jsmntok_t * current;
-
-    void parse_message(){
-
-    }
-
-    void parse_motor(){
-    }
-
-    void parse_servo(){
-
-        switch (current->type){
-            JSMN_PRIMITIVE:
-            default:
-        }
-    }
-
-    void parse_led(){
-        switch (current->type){
-            JSMN_PRIMITIVE:
-            default:
-        }
+void panic(){
+    while (1){
+        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
+        sleep_ms(100);
+        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
+        sleep_ms(100);
     }
 }
 
+void assert_true(bool should_be_true){
+    if (not should_be_true){
+        panic();
+    }
+}
+
+#define MAX_JSON_TOKENS 128
+
+class ParseJSON{
+
+    jsmn_parser parser;
+    jsmntok_t tokens[MAX_JSON_TOKENS];
+    jsmntok_t * current;
+
+    char * js;
+    Command * command_struct;
+
+public:
+    void parse_message(char *incoming_str, Command * where_to_save){
+        command_struct = where_to_save;
+        js = incoming_str;
+
+        jsmn_init(&parser);
+        int token_number = jsmn_parse(&parser, js, strlen(js), tokens, MAX_JSON_TOKENS);
+
+        if (token_number < 0){
+            switch (token_number){
+                case JSMN_ERROR_INVAL: printf("invalid json\n"); break;
+                case JSMN_ERROR_NOMEM: printf("insufficent tokens\n"); break;
+                case JSMN_ERROR_PART: printf("partial json\n"); break;
+                default: printf("unknown error\n");
+            }
+            assert_true(false);
+        }
+
+        current = tokens;
+
+        while ( current < tokens + token_number) {
+            printf(" type: %d, start: %d, end: %d, size: %d\n", current->type, current->start, current->end, current->size);
+            current++;
+        }
+        current = tokens;
+
+        assert_true(current->type == JSMN_OBJECT);
+        current++;
+
+        assert_true(current->type == JSMN_STRING);
+
+        while ( current < tokens + token_number) {
+            switch( js[current->start] ){
+                case 's': current++; parse_servos(); break;
+                case 'm': current++; parse_motors(); break;
+                case 'l': current++; parse_led(); break;
+                default: assert_true(false);
+            }
+        }
+
+    }
+
+    void parse_motor(int i){
+    }
+
+    void parse_motors(){
+        assert_true(current->type == JSMN_ARRAY);
+        current++;
+
+        for(int i = 0; i < 4; i++){
+            parse_motor(i);
+        }
+    }
+
+    void parse_servos(){
+        assert_true(current->type == JSMN_ARRAY);
+        current++;
+
+        for(int i = 0; i < 4; i++){
+            parse_servo(i);
+        }
+    }
+
+    void parse_servo(int i){
+        assert_true(current->type == JSMN_PRIMITIVE);
+        switch( js[current->start] ){
+            case 'n': command_struct->servos[i].on = false; break;
+            default: 
+                command_struct->servos[i].on = true;
+                command_struct->servos[i].angle = parse_int();
+        }
+
+        current++;
+    }
+
+    long parse_int(){
+        assert_true(current->type == JSMN_PRIMITIVE);
+
+        char first_char = js[current->start];
+        assert_true(first_char == '-' or (first_char >= '0' and first_char <= '9'));
+
+        return strtol(&js[current->start], NULL, 10);
+    }
+
+    void parse_led(){
+        assert_true(current->type == JSMN_ARRAY);
+        current++;
+
+        command_struct->led.red = parse_int();
+        current++;
+
+        command_struct->led.green = parse_int();
+        current++;
+
+        command_struct->led.blue = parse_int();
+        current++;
+
+        command_struct->led.blink = parse_int();
+        current++;
+    }
+};
+
 
 void core1_entry() {
-
-    // multicore_fifo_push_blocking(FLAG_VALUE);
-    // uint32_t g = multicore_fifo_pop_blocking();
-
-
-    while (1){
-        // tight_loop_contents();
-        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
-        sleep_ms(250);
-        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
-        sleep_ms(250);
-    }
+        printf("hello from core 1\n");
 }
 
 
@@ -171,6 +257,25 @@ void run_udp_beacon() {
 }
 
 
+
+class Sensors {
+    public:
+        long encoders[4];
+        float v_bat;
+};
+
+class MainData {
+public:
+    Command command_1;
+    Command command_2;
+
+    Command *active_command;
+    Command *scratch_command;
+
+    Sensors sensors;
+};
+
+
 int main() {
     stdio_init_all();
 
@@ -192,16 +297,21 @@ int main() {
         printf("Connected.\n");
     }
 
+    Command command;
 
-    multicore_launch_core1(core1_entry);
+    ParseJSON json_parser;
 
-    run_udp_receiver();
-    run_udp_beacon();
+    json_parser.parse_message(incoming, &command);
 
-    while (true) {
-        printf("Hello, world!\n");
-        sleep_ms(1000);
-    }
+    printf("%d\n", command.servos[2].angle);
+
+    // multicore_launch_core1(core1_entry);
+
+    // run_udp_receiver();
+    // run_udp_beacon();
+
+    printf("Hello, world!\n");
+
 }
 
 

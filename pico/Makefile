@@ -8,7 +8,7 @@ upload: build/$(project_name).uf2
 	picotool load -f build/$(project_name).uf2
 
 monitor:
-	tio /dev/$$(ls /dev | grep tty.usbmodem)
+	ls /dev | grep -q tty.usbmodem && tio /dev/$$(ls /dev | grep tty.usbmodem)
 
 build:
 	cd build; make
