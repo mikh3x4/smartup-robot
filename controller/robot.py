@@ -97,6 +97,12 @@ class Robot:
     def get_settings_version(self):
         return self.udp.get()["set_ver"]
 
+    def set_motor_speed_distance(self, index, speed, encoder_ticks):
+        assert 0 <= index <= 3
+        assert 0 <= speed <= 255
+        assert type(encoder_ticks) is int
+        self.msg["m"][index] = ["dst", speed, encoder_ticks]
+        self.udp.set(self.msg)
 
     def set_motor_speed(self, index, speed):
         assert 0 <= index <= 3

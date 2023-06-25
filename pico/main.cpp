@@ -208,18 +208,16 @@ void udp_recv_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 
 void run_udp_receiver() {
     struct udp_pcb* pcb = udp_new();
+    assert_true(pcb != NULL);
+
     if (pcb == NULL) {
         printf("Failed to create new UDP PCB.\n");
         return;
     }
 
     err_t er = udp_bind(pcb, IP_ADDR_ANY, UDP_PORT);
-    if (er != ERR_OK) {
-        printf("Failed to bind to the port! error=%d", er);
-        return;
-    }
+    assert_true(er == ERR_OK);
 
-    /* set recv callback for any new udp packets that arrive at the port */
     udp_recv(pcb, udp_recv_callback, NULL);
 
 }
@@ -283,6 +281,9 @@ class Sensors {
     }
 };
 
+
+enum ROBOT_STATE {RUNNING, ESTOP, LOW_BATTERY, INIT, MULIPLE_CONTROLLERS};
+
 class MainData {
 public:
     Command command_1;
@@ -292,6 +293,10 @@ public:
     Command *scratch_command;
 
     Sensors sensors;
+
+    ip_addr_t telemetry_address;
+    u16_t telemetry_port;
+    // last update time variable
 };
 
 
