@@ -260,15 +260,27 @@ void run_udp_beacon() {
 
 class Sensors {
     public:
-        long encoders[4];
+        long encoders_position[4];
+        long encoders_speed[4];
         float v_bat;
         bool motor_done[4];
         long settings_version;
 
-    void encoder_json(char *js, size_t len){
+    void encode_json(char *js, size_t len){
+        int writen = snprintf(js, len,
+                 "{ \"vbat\": %.2f, "
+                 "\"pos\": [%ld, %ld, %ld, %ld], "
+                 "\"spd\": [%ld, %ld, %ld, %ld], "
+                 "\"done\": [%d, %d, %d, %d], "
+                 "\"set_ver\": %ld }",
+                 v_bat,
+                 encoders_position[0], encoders_position[1], encoders_position[2], encoders_position[3],
+                 encoders_speed[0], encoders_speed[1], encoders_speed[2], encoders_speed[3],
+                 motor_done[0], motor_done[1], motor_done[2], motor_done[3],
+                 settings_version);
 
-        snprintf(js, len, " { \" vbat \" : \"%f\"  } ", v_bat );
-
+        assert( writen > 0);
+        assert( writen < len);
     }
 };
 
@@ -282,6 +294,28 @@ public:
 
     Sensors sensors;
 };
+
+
+// void loop(){
+//
+//     get_udp;
+//     if updated_udp{
+//         parse_message
+//         if successful {
+//             Command temp = scratch_command;
+//             scratch_command = active_command;
+//             active_command = temp;
+//         }
+//     }
+//
+//     if estop (
+//         zero_everything;
+//     )
+//
+//     run_actuators();
+//
+//     send_udp;
+// }
 
 
 int main() {
@@ -308,6 +342,8 @@ int main() {
     Command command;
 
     ParseJSON json_parser;
+
+    printf("%d\n", command.servos[2].angle);
 
     json_parser.parse_message(incoming, &command);
 

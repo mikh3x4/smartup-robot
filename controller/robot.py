@@ -64,7 +64,8 @@ class UDP:
 class Robot:
     def __init__(self, ip, password=None):
         self.udp = UDP(ip)
-        self.msg = {"s": [None, None, None, None],
+        self.msg = {"p": password
+                    "s": [None, None, None, None],
                     "m": [None, None, None, None],
                     "led": [255, 255,255, 0]}
 
@@ -80,6 +81,28 @@ class Robot:
         self.msg["led"] = [red,green,blue,blink]
         self.udp.set(self.msg)
 
+
+    def set_motor_pid(self, index, kp, ki, kd):
+        assert 0 <= index <= 3
+
+        setting = self.get_settings_version()
+        self.msg["PID"]= [index, kp, ki, kd]
+        self.udp.set(self.msg)
+
+        # wait for new settings version number
+        while (self.get_settings_version() == setting):
+            pass
+        self.msg.pop("PID")
+
+    def get_settings_version(self):
+        return self.udp.get()["set_ver"]
+
+
+    def set_motor_speed(self, index, speed):
+        assert 0 <= index <= 3
+        assert -255 <= power <= 255
+        self.msg["m"][index] = ["spd", speed]
+        self.udp.set(self.msg)
 
     def set_motor_power(self, index, power):
         assert 0 <= index <= 3
@@ -102,9 +125,6 @@ class Robot:
         assert 0 <= index <= 3
         self.msg["s"][index] = None
         self.udp.set(self.msg)
-
-    def get(self):
-        return self.udp.get()
 
 
 if __name__ == "__main__":

@@ -19,8 +19,8 @@ typedef struct
 
 typedef struct 
 {
-    bool on;
-    int angle;
+    bool on = false;
+    int angle = 5;
 } Servo;
 
 
@@ -29,7 +29,7 @@ enum MOTOR_MODE {OFF, POWER, SPEED, DISTANCE};
 
 typedef struct 
 {
-    enum MOTOR_MODE mode;
+    enum MOTOR_MODE mode = OFF;
 } Motor;
 
 
