@@ -51,8 +51,7 @@
 
 #include <string.h>
 
-
-
+#include "wifi_pass.h"
 
 
 char incoming[] = "{"
