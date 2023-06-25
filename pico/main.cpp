@@ -253,6 +253,22 @@ void run_udp_beacon() {
     }
 }
 
+void send_udp() {
+        struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, BEACON_MSG_LEN_MAX+1, PBUF_RAM);
+        char *buffer = (char *)p->payload;
+
+        main_data.sensors.encode_json(buffer, BEACON_MSG_LEN_MAX);
+
+        // memset(req, 0, BEACON_MSG_LEN_MAX+1);
+        // snprintf(req, BEACON_MSG_LEN_MAX, "%d\n", counter);
+
+        // this will send a longer then needed message
+        err_t er = udp_sendto(main_data.udp_pcb, p, &main_data.telemetry_address, main_data.telemetry_port);
+
+        pbuf_free(p);
+
+        assert_true(er == ERR_OK);
+}
 
 
 class Sensors {
@@ -263,7 +279,7 @@ class Sensors {
         bool motor_done[4];
         long settings_version;
 
-    void encode_json(char *js, size_t len){
+    size_t encode_json(char *js, size_t len){
         int writen = snprintf(js, len,
                  "{ \"vbat\": %.2f, "
                  "\"pos\": [%ld, %ld, %ld, %ld], "
@@ -278,6 +294,7 @@ class Sensors {
 
         assert( writen > 0);
         assert( writen < len);
+        return writen;
     }
 };
 
@@ -294,19 +311,22 @@ public:
 
     Sensors sensors;
 
+    struct udp_pcb* udp_pcb;
     ip_addr_t telemetry_address;
     u16_t telemetry_port;
     // last update time variable
 };
 
+MainData main_data;
+
 
 // void loop(){
 //
+    // main_data.udp_pcb = udp_new();
 //     get_udp;
 //     if updated_udp{
 //         parse_message
-//         if successful {
-//             Command temp = scratch_command;
+//         if successful { Command temp = scratch_command;
 //             scratch_command = active_command;
 //             active_command = temp;
 //         }
@@ -321,8 +341,7 @@ public:
 //     send_udp;
 // }
 
-
-int main() {
+void init(){
     stdio_init_all();
 
     if (cyw43_arch_init()) {
@@ -331,17 +350,18 @@ int main() {
     }
     cyw43_arch_enable_sta_mode();
 
-    printf("before ");
     printf(WIFI_SSID);
-    printf(" after\n");
-
-    printf("Connecting to Wi-Fi...\n");
+    printf(" Connecting to Wi-Fi...\n");
     if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000)) {
         printf("failed to connect.\n");
         return 1;
     } else {
         printf("Connected.\n");
     }
+}
+
+int main() {
+    init();
 
     Command command;
 
