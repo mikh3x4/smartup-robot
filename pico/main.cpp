@@ -31,25 +31,26 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "pico/stdlib.h"
-
 #include "pico/cyw43_arch.h"
+
+#include "pico/multicore.h"
+#include "hardware/gpio.h"
+#include "hardware/adc.h"
 
 #include "lwip/pbuf.h"
 #include "lwip/udp.h"
 
 #define UDP_PORT 8850
-#define BEACON_MSG_LEN_MAX 127
+#define BEACON_MSG_LEN_MAX 512
 #define BEACON_TARGET "192.168.4.247"
 #define BEACON_INTERVAL_MS 1000
 
-#include "pico/multicore.h"
 
 #include "jsnm.h"
 #include "command.hpp"
-
-#include <string.h>
 
 #include "wifi_pass.h"
 
@@ -281,6 +282,7 @@ class Sensors {
         long encoders_position[4] = {0, 1, 10, 100};
         long encoders_speed[4] = {0, 5, 50, -500};
         float v_bat = 3.14;
+        float temp = 20.0; //probably not needed but added as test
         bool motor_done[4] = {0, 0, 0, 1};
         long settings_version = 0;
         char debug[DEBUG_STRING_LEN] = "testing";
@@ -292,12 +294,14 @@ class Sensors {
                  "\"spd\": [%ld, %ld, %ld, %ld], "
                  "\"done\": [%d, %d, %d, %d], "
                  "\"debug\": \"%s\", "
+                 "\"temp\": %.2f, "
                  "\"set_ver\": %ld }",
                  v_bat,
                  encoders_position[0], encoders_position[1], encoders_position[2], encoders_position[3],
                  encoders_speed[0], encoders_speed[1], encoders_speed[2], encoders_speed[3],
                  motor_done[0], motor_done[1], motor_done[2], motor_done[3],
                  debug,
+                 temp,
                  settings_version);
 
         ASSERT( writen > 0);
@@ -453,7 +457,22 @@ int main() {
     init_udp_receiver();
 
 
+    adc_init();
+    adc_gpio_init(26);
+    adc_set_temp_sensor_enabled(true);
+    adc_select_input(0);
+
     while (1) {
+        const float conversion_factor = 3.3f / (1 << 12);
+
+        adc_select_input(0);
+        main_data.sensors.v_bat = adc_read() * conversion_factor;
+
+        adc_select_input(4);
+        float ADC_voltage = adc_read() * conversion_factor;
+        main_data.sensors.temp = 27 - (ADC_voltage - 0.706)/0.001721;
+
+        //random test copy
         main_data.sensors.encoders_position[0] = main_data.active_command->servos[0].angle;
 
         main_data.send_udp();
