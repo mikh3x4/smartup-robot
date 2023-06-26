@@ -267,6 +267,7 @@ void run_udp_beacon() {
 }
 
 
+#define DEBUG_STRING_LEN 128
 
 class Sensors {
     public:
@@ -275,6 +276,7 @@ class Sensors {
         float v_bat = 3.14;
         bool motor_done[4] = {0, 0, 0, 1};
         long settings_version = 0;
+        char debug[DEBUG_STRING_LEN] = "testing";
 
     size_t encode_json(char *js, size_t len){
         int writen = snprintf(js, len,
@@ -282,11 +284,13 @@ class Sensors {
                  "\"pos\": [%ld, %ld, %ld, %ld], "
                  "\"spd\": [%ld, %ld, %ld, %ld], "
                  "\"done\": [%d, %d, %d, %d], "
+                 "\"debug\": \"%s\", "
                  "\"set_ver\": %ld }",
                  v_bat,
                  encoders_position[0], encoders_position[1], encoders_position[2], encoders_position[3],
                  encoders_speed[0], encoders_speed[1], encoders_speed[2], encoders_speed[3],
                  motor_done[0], motor_done[1], motor_done[2], motor_done[3],
+                 debug,
                  settings_version);
 
         ASSERT( writen > 0);
