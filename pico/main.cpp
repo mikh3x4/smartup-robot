@@ -315,6 +315,24 @@ public:
     ip_addr_t telemetry_address;
     u16_t telemetry_port;
     // last update time variable
+    //
+    void send_udp() {
+        struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, BEACON_MSG_LEN_MAX+1, PBUF_RAM);
+        char *buffer = (char *)p->payload;
+
+        ipaddr_aton(BEACON_TARGET, &telemetry_address);
+        telemetry_port = 8851;
+
+        size_t real_size = this->sensors.encode_json(buffer, BEACON_MSG_LEN_MAX);
+
+        pbuf_realloc(p, real_size);
+
+        err_t er = udp_sendto(this->udp_pcb, p, &(this->telemetry_address), this->telemetry_port);
+
+        pbuf_free(p);
+        ASSERT(er == ERR_OK);
+    }
+
 };
 
 MainData main_data;
@@ -363,19 +381,6 @@ int init(){
 }
 
 
-void send_udp() {
-        struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, BEACON_MSG_LEN_MAX+1, PBUF_RAM);
-        char *buffer = (char *)p->payload;
-
-        size_t real_size = main_data.sensors.encode_json(buffer, BEACON_MSG_LEN_MAX);
-
-        pbuf_realloc(p, real_size + 1);
-
-        err_t er = udp_sendto(main_data.udp_pcb, p, &main_data.telemetry_address, main_data.telemetry_port);
-
-        pbuf_free(p);
-        ASSERT(er == ERR_OK);
-}
 
 int main() {
     init();
@@ -389,9 +394,11 @@ int main() {
     // json_parser.parse_message(incoming, &command);
 
     // printf("%d\n", command.servos[2].angle);
+    //
+    main_data.udp_pcb = udp_new();
 
     while (1) {
-        send_udp();
+        main_data.send_udp();
         printf("Hello, world!\n");
         sleep_ms(1000);
     }
