@@ -16,26 +16,29 @@ class UDP:
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
 
         self.sock.settimeout(0.0)
-        self.sock.connect((ip, self.PORT))
+        # self.sock.connect((ip, self.PORT))
+
+        self.outgoing_addres = (ip, self.PORT)
 
         self.outgoing = None
         self.incoming = None
 
     def send_message(self, message):
-        self.sock.send(json.dumps(message).encode())
+        self.sock.sendto(json.dumps(message).encode(), self.outgoing_addres)
 
     def get_most_recent(self):
         data = None
         try:
             while True:
                 data, address = self.sock.recvfrom(self.MAX_SIZE)
-        except socket.error:
+        except socket.error as e:
+            # print("socket error", e)
             pass
 
         if data is None:
             return None
 
-        print(data)
+        # print(data)
 
         return json.loads( data.decode() )
 
@@ -63,14 +66,17 @@ class UDP:
 
 class Robot:
     def __init__(self, ip, password=None):
+        if password == None:
+            password = "test"
         self.udp = UDP(ip)
-        self.msg = {"p": password
+        self.msg = {"p": password,
                     "s": [None, None, None, None],
-                    "m": [None, None, None, None],
+                    "m": [["off"], ["off"], ["off"], ["off"]],
                     "led": [255, 255,255, 0]}
 
         self.com_tread = threading.Thread(target=self.udp.communicate, daemon=True)
         self.com_tread.start()
+        self.udp.set(self.msg)
 
 
     def set_led(self, red, green, blue, blink=0):

@@ -8,6 +8,9 @@
 #include<stdio.h>
 #include<stdint.h>
 
+#include "lwip/pbuf.h"
+#include "lwip/udp.h"
+
 typedef struct 
 {
     uint8_t red;
@@ -46,6 +49,9 @@ typedef struct
     Led led;
     Motor motors[4];
     Servo servos[4];
+
+    ip_addr_t telemetry_address;
+    u16_t telemetry_port;
 } Command;
 
 

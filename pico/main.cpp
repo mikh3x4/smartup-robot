@@ -59,13 +59,7 @@ char incoming[] = "{"
 " \"led\": [ 255, 100, 0, 0], "
     "}";
 
-// " \"m\": [ null, [\"pwr\", 255], [\"spd\", 50], null], "
-//
-//
 
-
-
-#include <string.h>
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
 #define ASSERT(condition) ASSERTM(condition, "")
@@ -101,12 +95,12 @@ class ParseJSON{
     Command * command_struct;
 
 public:
-    void parse_message(char *incoming_str, Command * where_to_save){
+    void parse_message(char *incoming_str, size_t incoming_len, Command * where_to_save){
         command_struct = where_to_save;
         js = incoming_str;
 
         jsmn_init(&parser);
-        int token_number = jsmn_parse(&parser, js, strlen(js), tokens, MAX_JSON_TOKENS);
+        int token_number = jsmn_parse(&parser, js, incoming_len, tokens, MAX_JSON_TOKENS);
 
         if (token_number < 0){
             switch (token_number){
@@ -120,11 +114,11 @@ public:
 
         current = tokens;
 
-        while ( current < tokens + token_number) {
-            printf(" type: %d, start: %d, end: %d, size: %d\n", current->type, current->start, current->end, current->size);
-            current++;
-        }
-        current = tokens;
+        // while ( current < tokens + token_number) {
+        //     printf(" type: %d, start: %d, end: %d, size: %d\n", current->type, current->start, current->end, current->size);
+        //     current++;
+        // }
+        // current = tokens;
 
         ASSERT(current->type == JSMN_OBJECT);
         current++;
@@ -277,32 +271,6 @@ void core1_entry() {
 }
 
 
-void udp_recv_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port) {
-    /* We have received a packet, process it. */
-    if (p != NULL) {
-        char *rec = (char *)p->payload;
-        printf("Received packet: %s\n", rec);
-
-        /* Free the pbuf */
-        pbuf_free(p);
-    }
-}
-
-void init_udp_receiver() {
-    struct udp_pcb* pcb = udp_new();
-    ASSERT(pcb != NULL);
-
-    if (pcb == NULL) {
-        printf("Failed to create new UDP PCB.\n");
-        return;
-    }
-
-    err_t er = udp_bind(pcb, IP_ADDR_ANY, UDP_PORT);
-    ASSERT(er == ERR_OK);
-
-    udp_recv(pcb, udp_recv_callback, NULL);
-
-}
 
 
 
@@ -345,6 +313,7 @@ class MainData {
 public:
 
     enum ROBOT_STATE robot_data = INIT;
+    struct pbuf *current_incomming;
 
     ParseJSON json_parser;
     Command command_1;
@@ -356,22 +325,22 @@ public:
     Sensors sensors;
 
     struct udp_pcb* udp_pcb;
-    ip_addr_t telemetry_address;
-    u16_t telemetry_port;
+    // ip_addr_t telemetry_address;
+    // u16_t telemetry_port;
     // last update time variable
     //
     void send_udp() {
         struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, BEACON_MSG_LEN_MAX+1, PBUF_RAM);
         char *buffer = (char *)p->payload;
 
-        ipaddr_aton(BEACON_TARGET, &telemetry_address);
-        telemetry_port = 8851;
-
         size_t real_size = this->sensors.encode_json(buffer, BEACON_MSG_LEN_MAX);
 
         pbuf_realloc(p, real_size);
 
-        err_t er = udp_sendto(this->udp_pcb, p, &(this->telemetry_address), this->telemetry_port);
+        err_t er = udp_sendto(this->udp_pcb, p, &(active_command->telemetry_address), active_command->telemetry_port);
+
+        printf("Sent packet: %.*s\n", p->len ,buffer);
+        printf("sent to %d\n", active_command->telemetry_port);
 
         pbuf_free(p);
         ASSERT(er == ERR_OK);
@@ -379,7 +348,45 @@ public:
 
 };
 
+
+void udp_recv_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port) {
+    if (p == NULL) return;
+
+    MainData *main_data_ptr = (MainData*)arg;
+
+    memcpy(&(main_data_ptr->scratch_command->telemetry_address), addr, sizeof(ip_addr_t));
+    main_data_ptr->scratch_command->telemetry_port = port;
+
+    char *rec = (char *)p->payload;
+    main_data_ptr->json_parser.parse_message(rec, p->len, main_data_ptr->scratch_command);
+
+    printf("Received packet: %.*s\n", p->len ,rec);
+
+    pbuf_free(p);
+
+    // needs mailbox to indicate swapping behaviour
+    Command *temp = main_data_ptr->active_command;
+    main_data_ptr->active_command = main_data_ptr->scratch_command; // This line needs to be atomic
+    main_data_ptr->scratch_command = temp;
+}
+
+
 MainData main_data;
+
+void init_udp_receiver() {
+    struct udp_pcb* pcb = udp_new();
+    ASSERT(pcb != NULL);
+
+    if (pcb == NULL) {
+        printf("Failed to create new UDP PCB.\n");
+        return;
+    }
+
+    err_t er = udp_bind(pcb, IP_ADDR_ANY, UDP_PORT);
+    ASSERT(er == ERR_OK);
+
+    udp_recv(pcb, udp_recv_callback, &main_data);
+}
 
 
 // void loop(){
@@ -436,8 +443,19 @@ int main() {
     // printf("%d\n", command.servos[2].angle);
     //
     main_data.udp_pcb = udp_new();
+    main_data.active_command = &main_data.command_1;
+    main_data.scratch_command = &main_data.command_2;
+
+    ipaddr_aton(BEACON_TARGET, &(main_data.active_command->telemetry_address));
+    main_data.active_command->telemetry_port = 8851;
+
+
+    init_udp_receiver();
+
 
     while (1) {
+        main_data.sensors.encoders_position[0] = main_data.active_command->servos[0].angle;
+
         main_data.send_udp();
         printf("Hello, world!\n");
         sleep_ms(1000);
