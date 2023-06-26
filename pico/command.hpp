@@ -30,6 +30,14 @@ enum MOTOR_MODE {OFF, POWER, SPEED, DISTANCE};
 typedef struct 
 {
     enum MOTOR_MODE mode = OFF;
+    int16_t power;
+    int16_t speed;
+    int32_t distance;
+
+    float ff = 1.0;
+    float kp = 1.0;
+    float ki = 0.0;
+    float kd = 0.0;
 } Motor;
 
 

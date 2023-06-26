@@ -136,13 +136,82 @@ public:
                 case 's': current++; parse_servos(); break;
                 case 'm': current++; parse_motors(); break;
                 case 'l': current++; parse_led(); break;
+                case 'P': current++; parse_pid(); break;
+                case 'p': current++; parse_password(); break;
                 default: ASSERT(false);
             }
         }
 
     }
 
+    void parse_password(){
+        ASSERT(current->type == JSMN_STRING);
+        // TODO
+        current++;
+    }
+
+    void parse_pid(){
+        ASSERT(current->type == JSMN_ARRAY);
+        current++;
+
+        ASSERT(current->type == JSMN_PRIMITIVE);
+        int i = parse_int();
+        current++;
+
+        ASSERT(current->type == JSMN_PRIMITIVE);
+        command_struct->motors[i].kp = parse_int();
+        current++;
+
+        ASSERT(current->type == JSMN_PRIMITIVE);
+        command_struct->motors[i].ki = parse_int();
+        current++;
+
+        ASSERT(current->type == JSMN_PRIMITIVE);
+        command_struct->motors[i].kd = parse_int();
+        current++;
+    }
+
+
     void parse_motor(int i){
+        ASSERT(current->type == JSMN_ARRAY);
+        current++;
+
+        ASSERT(current->type == JSMN_STRING);
+        switch( js[current->start] ){
+            case 'o': 
+                command_struct->motors[i].mode = OFF;
+                current++;
+                break;
+            case 'p': 
+                command_struct->motors[i].mode = POWER;
+                current++;
+                ASSERT(current->type == JSMN_PRIMITIVE);
+                command_struct->motors[i].power = parse_int();
+                current++;
+                break;
+
+            case 's':
+                command_struct->motors[i].mode = SPEED;
+                current++;
+                ASSERT(current->type == JSMN_PRIMITIVE);
+                command_struct->motors[i].speed = parse_int();
+                current++;
+                break;
+            case 'd':
+                command_struct->motors[i].mode = DISTANCE;
+                current++;
+                ASSERT(current->type == JSMN_PRIMITIVE);
+                command_struct->motors[i].speed = parse_int();
+                current++;
+
+                ASSERT(current->type == JSMN_PRIMITIVE);
+                command_struct->motors[i].distance = parse_int();
+                current++;
+                break;
+
+            default: ASSERT(false);
+        }
+
     }
 
     void parse_motors(){
