@@ -60,6 +60,24 @@ char incoming[] = "{"
     "}";
 
 // " \"m\": [ null, [\"pwr\", 255], [\"spd\", 50], null], "
+//
+//
+
+
+
+#include <string.h>
+#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+
+#define ASSERT(condition) ASSERTM(condition, "")
+
+#define ASSERTM(condition, message) \
+    do { \
+        if (!(condition)) { \
+            fprintf(stderr, "Assertion failed: %s\n%s in %s:%d %s\n", \
+                    #condition, message, __FILENAME__, __LINE__, __func__); \
+            panic(); \
+        } \
+    } while (0)
 
 void panic(){
     while (1){
@@ -70,11 +88,6 @@ void panic(){
     }
 }
 
-void assert_true(bool should_be_true){
-    if (not should_be_true){
-        panic();
-    }
-}
 
 #define MAX_JSON_TOKENS 128
 
@@ -102,7 +115,7 @@ public:
                 case JSMN_ERROR_PART: printf("partial json\n"); break;
                 default: printf("unknown error\n");
             }
-            assert_true(false);
+            ASSERT(false);
         }
 
         current = tokens;
@@ -113,17 +126,17 @@ public:
         }
         current = tokens;
 
-        assert_true(current->type == JSMN_OBJECT);
+        ASSERT(current->type == JSMN_OBJECT);
         current++;
 
-        assert_true(current->type == JSMN_STRING);
+        ASSERT(current->type == JSMN_STRING);
 
         while ( current < tokens + token_number) {
             switch( js[current->start] ){
                 case 's': current++; parse_servos(); break;
                 case 'm': current++; parse_motors(); break;
                 case 'l': current++; parse_led(); break;
-                default: assert_true(false);
+                default: ASSERT(false);
             }
         }
 
@@ -133,7 +146,7 @@ public:
     }
 
     void parse_motors(){
-        assert_true(current->type == JSMN_ARRAY);
+        ASSERT(current->type == JSMN_ARRAY);
         current++;
 
         for(int i = 0; i < 4; i++){
@@ -142,7 +155,7 @@ public:
     }
 
     void parse_servos(){
-        assert_true(current->type == JSMN_ARRAY);
+        ASSERT(current->type == JSMN_ARRAY);
         current++;
 
         for(int i = 0; i < 4; i++){
@@ -151,7 +164,7 @@ public:
     }
 
     void parse_servo(int i){
-        assert_true(current->type == JSMN_PRIMITIVE);
+        ASSERT(current->type == JSMN_PRIMITIVE);
         switch( js[current->start] ){
             case 'n': command_struct->servos[i].on = false; break;
             default: 
@@ -163,16 +176,16 @@ public:
     }
 
     long parse_int(){
-        assert_true(current->type == JSMN_PRIMITIVE);
+        ASSERT(current->type == JSMN_PRIMITIVE);
 
         char first_char = js[current->start];
-        assert_true(first_char == '-' or (first_char >= '0' and first_char <= '9'));
+        ASSERT(first_char == '-' or (first_char >= '0' and first_char <= '9'));
 
         return strtol(&js[current->start], NULL, 10);
     }
 
     void parse_led(){
-        assert_true(current->type == JSMN_ARRAY);
+        ASSERT(current->type == JSMN_ARRAY);
         current++;
 
         command_struct->led.red = parse_int();
@@ -208,7 +221,7 @@ void udp_recv_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 
 void run_udp_receiver() {
     struct udp_pcb* pcb = udp_new();
-    assert_true(pcb != NULL);
+    ASSERT(pcb != NULL);
 
     if (pcb == NULL) {
         printf("Failed to create new UDP PCB.\n");
@@ -216,7 +229,7 @@ void run_udp_receiver() {
     }
 
     err_t er = udp_bind(pcb, IP_ADDR_ANY, UDP_PORT);
-    assert_true(er == ERR_OK);
+    ASSERT(er == ERR_OK);
 
     udp_recv(pcb, udp_recv_callback, NULL);
 
@@ -253,31 +266,15 @@ void run_udp_beacon() {
     }
 }
 
-void send_udp() {
-        struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, BEACON_MSG_LEN_MAX+1, PBUF_RAM);
-        char *buffer = (char *)p->payload;
-
-        main_data.sensors.encode_json(buffer, BEACON_MSG_LEN_MAX);
-
-        // memset(req, 0, BEACON_MSG_LEN_MAX+1);
-        // snprintf(req, BEACON_MSG_LEN_MAX, "%d\n", counter);
-
-        // this will send a longer then needed message
-        err_t er = udp_sendto(main_data.udp_pcb, p, &main_data.telemetry_address, main_data.telemetry_port);
-
-        pbuf_free(p);
-
-        assert_true(er == ERR_OK);
-}
 
 
 class Sensors {
     public:
-        long encoders_position[4];
-        long encoders_speed[4];
-        float v_bat;
-        bool motor_done[4];
-        long settings_version;
+        long encoders_position[4] = {0, 1, 10, 100};
+        long encoders_speed[4] = {0, 5, 50, -500};
+        float v_bat = 3.14;
+        bool motor_done[4] = {0, 0, 0, 1};
+        long settings_version = 0;
 
     size_t encode_json(char *js, size_t len){
         int writen = snprintf(js, len,
@@ -292,8 +289,8 @@ class Sensors {
                  motor_done[0], motor_done[1], motor_done[2], motor_done[3],
                  settings_version);
 
-        assert( writen > 0);
-        assert( writen < len);
+        ASSERT( writen > 0);
+        ASSERT( writen < len);
         return writen;
     }
 };
@@ -303,6 +300,9 @@ enum ROBOT_STATE {RUNNING, ESTOP, LOW_BATTERY, INIT, MULIPLE_CONTROLLERS};
 
 class MainData {
 public:
+
+    enum ROBOT_STATE robot_data = INIT;
+
     Command command_1;
     Command command_2;
 
@@ -341,7 +341,7 @@ MainData main_data;
 //     send_udp;
 // }
 
-void init(){
+int init(){
     stdio_init_all();
 
     if (cyw43_arch_init()) {
@@ -358,27 +358,49 @@ void init(){
     } else {
         printf("Connected.\n");
     }
+
+    return 0;
+}
+
+
+void send_udp() {
+        struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, BEACON_MSG_LEN_MAX+1, PBUF_RAM);
+        char *buffer = (char *)p->payload;
+
+        size_t real_size = main_data.sensors.encode_json(buffer, BEACON_MSG_LEN_MAX);
+
+        pbuf_realloc(p, real_size + 1);
+
+        err_t er = udp_sendto(main_data.udp_pcb, p, &main_data.telemetry_address, main_data.telemetry_port);
+
+        pbuf_free(p);
+        ASSERT(er == ERR_OK);
 }
 
 int main() {
     init();
 
-    Command command;
+    // Command command;
+    //
+    // ParseJSON json_parser;
+    //
+    // printf("%d\n", command.servos[2].angle);
+    //
+    // json_parser.parse_message(incoming, &command);
 
-    ParseJSON json_parser;
+    // printf("%d\n", command.servos[2].angle);
 
-    printf("%d\n", command.servos[2].angle);
-
-    json_parser.parse_message(incoming, &command);
-
-    printf("%d\n", command.servos[2].angle);
+    while (1) {
+        send_udp();
+        printf("Hello, world!\n");
+        sleep_ms(1000);
+    }
 
     // multicore_launch_core1(core1_entry);
 
     // run_udp_receiver();
     // run_udp_beacon();
 
-    printf("Hello, world!\n");
 
 }
 
