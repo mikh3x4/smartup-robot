@@ -219,7 +219,7 @@ void udp_recv_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
     }
 }
 
-void run_udp_receiver() {
+void init_udp_receiver() {
     struct udp_pcb* pcb = udp_new();
     ASSERT(pcb != NULL);
 
@@ -235,36 +235,6 @@ void run_udp_receiver() {
 
 }
 
-
-void run_udp_beacon() {
-    struct udp_pcb* pcb = udp_new();
-
-    ip_addr_t addr;
-    ipaddr_aton(BEACON_TARGET, &addr);
-
-    int counter = 0;
-    while (true) {
-
-
-        struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, BEACON_MSG_LEN_MAX+1, PBUF_RAM);
-        char *req = (char *)p->payload;
-        memset(req, 0, BEACON_MSG_LEN_MAX+1);
-        snprintf(req, BEACON_MSG_LEN_MAX, "%d\n", counter);
-        err_t er = udp_sendto(pcb, p, &addr, UDP_PORT);
-        pbuf_free(p);
-        if (er != ERR_OK) {
-            printf("Failed to send UDP packet! error=%d", er);
-        } else {
-            printf("Sent packet %d\n", counter);
-            counter++;
-        }
-
-        // if you are not using pico_cyw43_arch_poll, then WiFI driver and lwIP work
-        // is done via interrupt in the background. This sleep is just an example of some (blocking)
-        // work you might be doing.
-        sleep_ms(BEACON_INTERVAL_MS);
-    }
-}
 
 
 #define DEBUG_STRING_LEN 128
@@ -307,6 +277,7 @@ public:
 
     enum ROBOT_STATE robot_data = INIT;
 
+    ParseJSON json_parser;
     Command command_1;
     Command command_2;
 
@@ -389,10 +360,6 @@ int init(){
 int main() {
     init();
 
-    // Command command;
-    //
-    // ParseJSON json_parser;
-    //
     // printf("%d\n", command.servos[2].angle);
     //
     // json_parser.parse_message(incoming, &command);

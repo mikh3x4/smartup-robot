@@ -86,13 +86,14 @@ class Robot:
         assert 0 <= index <= 3
 
         setting = self.get_settings_version()
-        self.msg["PID"]= [index, kp, ki, kd]
+        self.msg["m"][index]["pid"] = [kp, ki, kd]
         self.udp.set(self.msg)
 
         # wait for new settings version number
         while (self.get_settings_version() == setting):
             pass
-        self.msg.pop("PID")
+
+        self.msg["m"][index].pop("pid")
 
     def get_settings_version(self):
         return self.udp.get()["set_ver"]
@@ -118,7 +119,7 @@ class Robot:
 
     def disable_motor(self, index):
         assert 0 <= index <= 3
-        self.msg["m"][index] = None
+        self.msg["m"][index] = ["off"]
         self.udp.set(self.msg)
 
     def set_servo(self, index, angle):
