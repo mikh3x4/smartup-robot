@@ -126,7 +126,6 @@ public:
     Sensors sensors;
 
     struct udp_pcb* udp_pcb;
-    // last update time variable
 
     void init_udp_receiver() {
         struct udp_pcb* pcb = udp_new();
@@ -152,7 +151,6 @@ public:
         this->active_command->telemetry_port = 8851;
 
         init_udp_receiver();
-
     }
 
     void send_udp() {
@@ -182,17 +180,17 @@ void udp_recv_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 
     memcpy(&(main_data_ptr->scratch_command->telemetry_address), addr, sizeof(ip_addr_t));
     main_data_ptr->scratch_command->telemetry_port = port;
+    main_data_ptr->scratch_command->recv_time = get_absolute_time();
 
     char *rec = (char *)p->payload;
     bool worked = main_data_ptr->json_parser.parse_message(rec, p->len, main_data_ptr->scratch_command);
 
     printf("Received packet: %.*s\n", p->len ,rec);
-
     pbuf_free(p);
 
-    // needs mailbox to indicate swapping behaviour
     if (worked){
-        printf("Parced ok\n");
+        printf("Parsed ok\n");
+
         Command *temp = main_data_ptr->active_command;
         main_data_ptr->active_command = main_data_ptr->scratch_command; // This line needs to be atomic
         main_data_ptr->scratch_command = temp;
@@ -231,6 +229,11 @@ int main() {
 
 
     while (1) {
+        if( absolute_time_diff_us(main_data.active_command->recv_time, get_absolute_time()) > 500000) {
+            printf("Stale command! ESTOP\n");
+            main_data.active_command->estop();
+        }
+
         const float conversion_factor = 3.3f / (1 << 12);
 
         adc_select_input(0);

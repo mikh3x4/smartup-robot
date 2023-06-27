@@ -52,6 +52,25 @@ typedef struct
 
     ip_addr_t telemetry_address;
     u16_t telemetry_port;
+    absolute_time_t recv_time;
+
+    void estop(){
+        led.red = 255;
+        led.green = 0;
+        led.blue = 0;
+        led.blink = 100;
+
+        motors[0].mode = OFF;
+        motors[1].mode = OFF;
+        motors[2].mode = OFF;
+        motors[3].mode = OFF;
+
+        servos[0].on = false;
+        servos[1].on = false;
+        servos[2].on = false;
+        servos[3].on = false;
+    }
+
 } Command;
 
 
