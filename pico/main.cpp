@@ -51,254 +51,16 @@
 
 #include "jsnm.h"
 #include "command.hpp"
+#include "error.hpp"
+#include "parser.hpp"
 
 #include "wifi_pass.h"
 
-
-char incoming[] = "{"
-" \"s\": [ null, null, 91, null], "
-" \"led\": [ 255, 100, 0, 0], "
-    "}";
-
-
-#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
-
-#define ASSERT(condition) ASSERTM(condition, "")
-
-#define ASSERTM(condition, message) \
-    do { \
-        if (!(condition)) { \
-            fprintf(stderr, "Assertion failed: %s\n%s in %s:%d %s\n\n", \
-                    #condition, message, __FILENAME__, __LINE__, __func__); \
-            panic(); \
-        } \
-    } while (0)
-
-#define ASSERT_RETURN(condition) \
-    do { \
-        if (!(condition)) { \
-            fprintf(stderr, "Assertion failed: %s returning\nin %s:%d %s\n\n", \
-                    #condition, __FILENAME__, __LINE__, __func__); \
-            return false; \
-        } \
-    } while (0)
-
-void panic(){
-    while (1){
-        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
-        sleep_ms(100);
-        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
-        sleep_ms(100);
-    }
-}
-
-
-#define MAX_JSON_TOKENS 128
-
-class ParseJSON{
-
-    jsmn_parser parser;
-    jsmntok_t tokens[MAX_JSON_TOKENS];
-    jsmntok_t * current;
-
-    char * js;
-    Command * command_struct;
-
-public:
-    bool parse_message(char *incoming_str, size_t incoming_len, Command * where_to_save){
-        command_struct = where_to_save;
-        js = incoming_str;
-
-        jsmn_init(&parser);
-        int token_number = jsmn_parse(&parser, js, incoming_len, tokens, MAX_JSON_TOKENS);
-
-        if (token_number < 0){
-            switch (token_number){
-                case JSMN_ERROR_INVAL: printf("invalid json\n"); break;
-                case JSMN_ERROR_NOMEM: printf("insufficent tokens\n"); break;
-                case JSMN_ERROR_PART: printf("partial json\n"); break;
-                default: printf("unknown error\n");
-            }
-            return false;
-        }
-
-        current = tokens;
-
-        // while ( current < tokens + token_number) {
-        //     printf(" type: %d, start: %d, end: %d, size: %d\n", current->type, current->start, current->end, current->size);
-        //     current++;
-        // }
-        // current = tokens;
-
-        ASSERT_RETURN(current->type == JSMN_OBJECT);
-        current++;
-
-        ASSERT_RETURN(current->type == JSMN_STRING);
-
-        while ( current < tokens + token_number) {
-            switch( js[current->start] ){
-                case 's': current++; ASSERT_RETURN(parse_servos()); break;
-                case 'm': current++; ASSERT_RETURN(parse_motors()); break;
-                case 'l': current++; ASSERT_RETURN(parse_led()); break;
-                case 'P': current++; ASSERT_RETURN(parse_pid()); break;
-                case 'p': current++; ASSERT_RETURN(parse_password()); break;
-                default: return false;
-            }
-        }
-        return true;
-
-    }
-
-    bool parse_password(){
-        ASSERT_RETURN(current->type == JSMN_STRING);
-        // we put the quote in the string to verify we reached the end of the pass
-        ASSERT_RETURN(0 == strncmp("secret\"", &js[current->start], current->end - current->start + 1));
-        current++;
-        return true;
-    }
-
-    bool parse_pid(){
-        ASSERT_RETURN(current->type == JSMN_ARRAY);
-        ASSERT_RETURN(current->size == 4);
-        current++;
-
-        ASSERT_RETURN(current->type == JSMN_PRIMITIVE);
-        int i = parse_int();
-        current++;
-
-        ASSERT_RETURN(current->type == JSMN_PRIMITIVE);
-        command_struct->motors[i].kp = parse_int();
-        current++;
-
-        ASSERT_RETURN(current->type == JSMN_PRIMITIVE);
-        command_struct->motors[i].ki = parse_int();
-        current++;
-
-        ASSERT_RETURN(current->type == JSMN_PRIMITIVE);
-        command_struct->motors[i].kd = parse_int();
-        current++;
-
-        return true;
-    }
-
-
-    bool parse_motor(int i){
-        ASSERT_RETURN(current->type == JSMN_ARRAY);
-        int size = current->size;
-        current++;
-
-        ASSERT_RETURN(current->type == JSMN_STRING);
-        switch( js[current->start] ){
-            case 'o': 
-                ASSERT_RETURN(size == 1);
-                command_struct->motors[i].mode = OFF;
-                current++;
-                break;
-            case 'p': 
-                ASSERT_RETURN(size == 2);
-                command_struct->motors[i].mode = POWER;
-                current++;
-                ASSERT_RETURN(current->type == JSMN_PRIMITIVE);
-                command_struct->motors[i].power = parse_int();
-                current++;
-                break;
-
-            case 's':
-                ASSERT_RETURN(size == 2);
-                command_struct->motors[i].mode = SPEED;
-                current++;
-                ASSERT_RETURN(current->type == JSMN_PRIMITIVE);
-                command_struct->motors[i].speed = parse_int();
-                current++;
-                break;
-            case 'd':
-                ASSERT_RETURN(size == 3);
-                command_struct->motors[i].mode = DISTANCE;
-                current++;
-                ASSERT_RETURN(current->type == JSMN_PRIMITIVE);
-                command_struct->motors[i].speed = parse_int();
-                current++;
-
-                ASSERT_RETURN(current->type == JSMN_PRIMITIVE);
-                command_struct->motors[i].distance = parse_int();
-                current++;
-                break;
-
-            default: return false;
-        }
-        return true;
-
-    }
-
-    bool parse_motors(){
-        ASSERT_RETURN(current->type == JSMN_ARRAY);
-        ASSERT_RETURN(current->size == 4);
-        current++;
-
-        for(int i = 0; i < 4; i++){
-            ASSERT_RETURN(parse_motor(i));
-        }
-        return true;
-    }
-
-    bool parse_servos(){
-        ASSERT_RETURN(current->type == JSMN_ARRAY);
-        ASSERT_RETURN(current->size == 4);
-        current++;
-
-        for(int i = 0; i < 4; i++){
-            ASSERT_RETURN(parse_servo(i));
-        }
-        return true;
-    }
-
-    bool parse_servo(int i){
-        ASSERT_RETURN(current->type == JSMN_PRIMITIVE);
-        switch( js[current->start] ){
-            case 'n': command_struct->servos[i].on = false; break;
-            default: 
-                command_struct->servos[i].on = true;
-                command_struct->servos[i].angle = parse_int();
-        }
-
-        current++;
-        return true;
-    }
-
-    long parse_int(){
-        ASSERT(current->type == JSMN_PRIMITIVE);
-
-        char first_char = js[current->start];
-        ASSERT(first_char == '-' or (first_char >= '0' and first_char <= '9'));
-
-        return strtol(&js[current->start], NULL, 10);
-    }
-
-    bool parse_led(){
-        ASSERT_RETURN(current->type == JSMN_ARRAY);
-        ASSERT_RETURN(current->size == 4);
-        current++;
-
-        command_struct->led.red = parse_int();
-        current++;
-
-        command_struct->led.green = parse_int();
-        current++;
-
-        command_struct->led.blue = parse_int();
-        current++;
-
-        command_struct->led.blink = parse_int();
-        current++;
-        return true;
-    }
-};
 
 
 void core1_entry() {
         printf("hello from core 1\n");
 }
-
 
 
 
@@ -341,26 +103,58 @@ class Sensors {
 
 enum ROBOT_STATE {RUNNING, ESTOP, LOW_BATTERY, INIT, MULIPLE_CONTROLLERS};
 
+
+void udp_recv_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
+
 class MainData {
 public:
-
     enum ROBOT_STATE robot_data = INIT;
     struct pbuf *current_incomming;
 
     ParseJSON json_parser;
+
+    // Double buffer the command so one is writen to while the other is used
     Command command_1;
     Command command_2;
 
+    // then they are swapped
+    // THIS IS VERY THREAD SAFTLY SKETCH
+    // IT RELIES ON POINTER WRITES BEING ATTOMIC ON THE RP2040
     Command *active_command;
     Command *scratch_command;
 
     Sensors sensors;
 
     struct udp_pcb* udp_pcb;
-    // ip_addr_t telemetry_address;
-    // u16_t telemetry_port;
     // last update time variable
-    //
+
+    void init_udp_receiver() {
+        struct udp_pcb* pcb = udp_new();
+        ASSERT(pcb != NULL);
+
+        if (pcb == NULL) {
+            printf("Failed to create new UDP PCB.\n");
+            return;
+        }
+
+        err_t er = udp_bind(pcb, IP_ADDR_ANY, UDP_PORT);
+        ASSERT(er == ERR_OK);
+
+        udp_recv(pcb, udp_recv_callback, this);
+    }
+
+    void init(){
+        this->udp_pcb = udp_new();
+        this->active_command = &this->command_1;
+        this->scratch_command = &this->command_2;
+
+        ipaddr_aton(BEACON_TARGET, &(this->active_command->telemetry_address));
+        this->active_command->telemetry_port = 8851;
+
+        init_udp_receiver();
+
+    }
+
     void send_udp() {
         struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, BEACON_MSG_LEN_MAX+1, PBUF_RAM);
         char *buffer = (char *)p->payload;
@@ -408,62 +202,17 @@ void udp_recv_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 
 MainData main_data;
 
-void init_udp_receiver() {
-    struct udp_pcb* pcb = udp_new();
-    ASSERT(pcb != NULL);
-
-    if (pcb == NULL) {
-        printf("Failed to create new UDP PCB.\n");
-        return;
-    }
-
-    err_t er = udp_bind(pcb, IP_ADDR_ANY, UDP_PORT);
-    ASSERT(er == ERR_OK);
-
-    udp_recv(pcb, udp_recv_callback, &main_data);
-}
 
 
-// void loop(){
-//
-    // main_data.udp_pcb = udp_new();
-//     get_udp;
-//     if updated_udp{
-//         parse_message
-//         if successful { Command temp = scratch_command;
-//             scratch_command = active_command;
-//             active_command = temp;
-//         }
-//     }
-//
-//     if estop (
-//         zero_everything;
-//     )
-//
-//     run_actuators();
-//
-//     send_udp;
-// }
-
-int init(){
+void init(){
     stdio_init_all();
 
-    if (cyw43_arch_init()) {
-        printf("failed to initialise\n");
-        return 1;
-    }
+    ASSERTM(not cyw43_arch_init(), "failed to initialise\n");
     cyw43_arch_enable_sta_mode();
 
-    printf(WIFI_SSID);
-    printf(" Connecting to Wi-Fi...\n");
-    if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000)) {
-        printf("failed to connect.\n");
-        return 1;
-    } else {
-        printf("Connected.\n");
-    }
-
-    return 0;
+    printf("Connecting to %s Wi-Fi...\n", WIFI_SSID);
+    ASSERTM(not cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000), "failed to connect to wifi\n");
+    printf("Connected.\n");
 }
 
 
@@ -471,27 +220,15 @@ int init(){
 int main() {
     init();
 
-    // printf("%d\n", command.servos[2].angle);
-    //
-    // json_parser.parse_message(incoming, &command);
+    main_data.init();
 
-    // printf("%d\n", command.servos[2].angle);
-    //
-    main_data.udp_pcb = udp_new();
-    main_data.active_command = &main_data.command_1;
-    main_data.scratch_command = &main_data.command_2;
-
-    ipaddr_aton(BEACON_TARGET, &(main_data.active_command->telemetry_address));
-    main_data.active_command->telemetry_port = 8851;
-
-
-    init_udp_receiver();
-
+    // multicore_launch_core1(core1_entry);
 
     adc_init();
     adc_gpio_init(26);
     adc_set_temp_sensor_enabled(true);
     adc_select_input(0);
+
 
     while (1) {
         const float conversion_factor = 3.3f / (1 << 12);
@@ -507,15 +244,8 @@ int main() {
         main_data.sensors.encoders_position[0] = main_data.active_command->servos[0].angle;
 
         main_data.send_udp();
-        printf("Hello, world!\n");
         sleep_ms(1000);
     }
-
-    // multicore_launch_core1(core1_entry);
-
-    // run_udp_receiver();
-    // run_udp_beacon();
-
 
 }
 
