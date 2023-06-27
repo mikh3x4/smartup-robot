@@ -68,9 +68,18 @@ char incoming[] = "{"
 #define ASSERTM(condition, message) \
     do { \
         if (!(condition)) { \
-            fprintf(stderr, "Assertion failed: %s\n%s in %s:%d %s\n", \
+            fprintf(stderr, "Assertion failed: %s\n%s in %s:%d %s\n\n", \
                     #condition, message, __FILENAME__, __LINE__, __func__); \
             panic(); \
+        } \
+    } while (0)
+
+#define ASSERT_RETURN(condition) \
+    do { \
+        if (!(condition)) { \
+            fprintf(stderr, "Assertion failed: %s returning\nin %s:%d %s\n\n", \
+                    #condition, __FILENAME__, __LINE__, __func__); \
+            return false; \
         } \
     } while (0)
 
@@ -96,7 +105,7 @@ class ParseJSON{
     Command * command_struct;
 
 public:
-    void parse_message(char *incoming_str, size_t incoming_len, Command * where_to_save){
+    bool parse_message(char *incoming_str, size_t incoming_len, Command * where_to_save){
         command_struct = where_to_save;
         js = incoming_str;
 
@@ -110,7 +119,7 @@ public:
                 case JSMN_ERROR_PART: printf("partial json\n"); break;
                 default: printf("unknown error\n");
             }
-            ASSERT(false);
+            return false;
         }
 
         current = tokens;
@@ -121,114 +130,130 @@ public:
         // }
         // current = tokens;
 
-        ASSERT(current->type == JSMN_OBJECT);
+        ASSERT_RETURN(current->type == JSMN_OBJECT);
         current++;
 
-        ASSERT(current->type == JSMN_STRING);
+        ASSERT_RETURN(current->type == JSMN_STRING);
 
         while ( current < tokens + token_number) {
             switch( js[current->start] ){
-                case 's': current++; parse_servos(); break;
-                case 'm': current++; parse_motors(); break;
-                case 'l': current++; parse_led(); break;
-                case 'P': current++; parse_pid(); break;
-                case 'p': current++; parse_password(); break;
-                default: ASSERT(false);
+                case 's': current++; ASSERT_RETURN(parse_servos()); break;
+                case 'm': current++; ASSERT_RETURN(parse_motors()); break;
+                case 'l': current++; ASSERT_RETURN(parse_led()); break;
+                case 'P': current++; ASSERT_RETURN(parse_pid()); break;
+                case 'p': current++; ASSERT_RETURN(parse_password()); break;
+                default: return false;
             }
         }
+        return true;
 
     }
 
-    void parse_password(){
-        ASSERT(current->type == JSMN_STRING);
-        // TODO
+    bool parse_password(){
+        ASSERT_RETURN(current->type == JSMN_STRING);
+        // we put the quote in the string to verify we reached the end of the pass
+        ASSERT_RETURN(0 == strncmp("secret\"", &js[current->start], current->end - current->start + 1));
         current++;
+        return true;
     }
 
-    void parse_pid(){
-        ASSERT(current->type == JSMN_ARRAY);
+    bool parse_pid(){
+        ASSERT_RETURN(current->type == JSMN_ARRAY);
+        ASSERT_RETURN(current->size == 4);
         current++;
 
-        ASSERT(current->type == JSMN_PRIMITIVE);
+        ASSERT_RETURN(current->type == JSMN_PRIMITIVE);
         int i = parse_int();
         current++;
 
-        ASSERT(current->type == JSMN_PRIMITIVE);
+        ASSERT_RETURN(current->type == JSMN_PRIMITIVE);
         command_struct->motors[i].kp = parse_int();
         current++;
 
-        ASSERT(current->type == JSMN_PRIMITIVE);
+        ASSERT_RETURN(current->type == JSMN_PRIMITIVE);
         command_struct->motors[i].ki = parse_int();
         current++;
 
-        ASSERT(current->type == JSMN_PRIMITIVE);
+        ASSERT_RETURN(current->type == JSMN_PRIMITIVE);
         command_struct->motors[i].kd = parse_int();
         current++;
+
+        return true;
     }
 
 
-    void parse_motor(int i){
-        ASSERT(current->type == JSMN_ARRAY);
+    bool parse_motor(int i){
+        ASSERT_RETURN(current->type == JSMN_ARRAY);
+        int size = current->size;
         current++;
 
-        ASSERT(current->type == JSMN_STRING);
+        ASSERT_RETURN(current->type == JSMN_STRING);
         switch( js[current->start] ){
             case 'o': 
+                ASSERT_RETURN(size == 1);
                 command_struct->motors[i].mode = OFF;
                 current++;
                 break;
             case 'p': 
+                ASSERT_RETURN(size == 2);
                 command_struct->motors[i].mode = POWER;
                 current++;
-                ASSERT(current->type == JSMN_PRIMITIVE);
+                ASSERT_RETURN(current->type == JSMN_PRIMITIVE);
                 command_struct->motors[i].power = parse_int();
                 current++;
                 break;
 
             case 's':
+                ASSERT_RETURN(size == 2);
                 command_struct->motors[i].mode = SPEED;
                 current++;
-                ASSERT(current->type == JSMN_PRIMITIVE);
+                ASSERT_RETURN(current->type == JSMN_PRIMITIVE);
                 command_struct->motors[i].speed = parse_int();
                 current++;
                 break;
             case 'd':
+                ASSERT_RETURN(size == 3);
                 command_struct->motors[i].mode = DISTANCE;
                 current++;
-                ASSERT(current->type == JSMN_PRIMITIVE);
+                ASSERT_RETURN(current->type == JSMN_PRIMITIVE);
                 command_struct->motors[i].speed = parse_int();
                 current++;
 
-                ASSERT(current->type == JSMN_PRIMITIVE);
+                ASSERT_RETURN(current->type == JSMN_PRIMITIVE);
                 command_struct->motors[i].distance = parse_int();
                 current++;
                 break;
 
-            default: ASSERT(false);
+            default: return false;
         }
+        return true;
 
     }
 
-    void parse_motors(){
-        ASSERT(current->type == JSMN_ARRAY);
+    bool parse_motors(){
+        ASSERT_RETURN(current->type == JSMN_ARRAY);
+        ASSERT_RETURN(current->size == 4);
         current++;
 
         for(int i = 0; i < 4; i++){
-            parse_motor(i);
+            ASSERT_RETURN(parse_motor(i));
         }
+        return true;
     }
 
-    void parse_servos(){
-        ASSERT(current->type == JSMN_ARRAY);
+    bool parse_servos(){
+        ASSERT_RETURN(current->type == JSMN_ARRAY);
+        ASSERT_RETURN(current->size == 4);
         current++;
 
         for(int i = 0; i < 4; i++){
-            parse_servo(i);
+            ASSERT_RETURN(parse_servo(i));
         }
+        return true;
     }
 
-    void parse_servo(int i){
-        ASSERT(current->type == JSMN_PRIMITIVE);
+    bool parse_servo(int i){
+        ASSERT_RETURN(current->type == JSMN_PRIMITIVE);
         switch( js[current->start] ){
             case 'n': command_struct->servos[i].on = false; break;
             default: 
@@ -237,6 +262,7 @@ public:
         }
 
         current++;
+        return true;
     }
 
     long parse_int(){
@@ -248,8 +274,9 @@ public:
         return strtol(&js[current->start], NULL, 10);
     }
 
-    void parse_led(){
-        ASSERT(current->type == JSMN_ARRAY);
+    bool parse_led(){
+        ASSERT_RETURN(current->type == JSMN_ARRAY);
+        ASSERT_RETURN(current->size == 4);
         current++;
 
         command_struct->led.red = parse_int();
@@ -263,6 +290,7 @@ public:
 
         command_struct->led.blink = parse_int();
         current++;
+        return true;
     }
 };
 
@@ -343,7 +371,7 @@ public:
 
         err_t er = udp_sendto(this->udp_pcb, p, &(active_command->telemetry_address), active_command->telemetry_port);
 
-        printf("Sent packet: %.*s\n", p->len ,buffer);
+        printf("Sent packet: %.*s\n", p->len, buffer);
         printf("sent to %d\n", active_command->telemetry_port);
 
         pbuf_free(p);
@@ -362,16 +390,19 @@ void udp_recv_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
     main_data_ptr->scratch_command->telemetry_port = port;
 
     char *rec = (char *)p->payload;
-    main_data_ptr->json_parser.parse_message(rec, p->len, main_data_ptr->scratch_command);
+    bool worked = main_data_ptr->json_parser.parse_message(rec, p->len, main_data_ptr->scratch_command);
 
     printf("Received packet: %.*s\n", p->len ,rec);
 
     pbuf_free(p);
 
     // needs mailbox to indicate swapping behaviour
-    Command *temp = main_data_ptr->active_command;
-    main_data_ptr->active_command = main_data_ptr->scratch_command; // This line needs to be atomic
-    main_data_ptr->scratch_command = temp;
+    if (worked){
+        printf("Parced ok\n");
+        Command *temp = main_data_ptr->active_command;
+        main_data_ptr->active_command = main_data_ptr->scratch_command; // This line needs to be atomic
+        main_data_ptr->scratch_command = temp;
+    }
 }
 
 

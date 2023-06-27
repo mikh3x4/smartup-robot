@@ -23,6 +23,8 @@ class UDP:
         self.outgoing = None
         self.incoming = None
 
+        self.thread_running = False
+
     def send_message(self, message):
         self.sock.sendto(json.dumps(message).encode(), self.outgoing_addres)
 
@@ -48,7 +50,7 @@ class UDP:
             pass
 
         # try:
-        while 1:
+        while self.thread_running:
             time.sleep(0.1)
             self.send_message(self.outgoing)
             incoming = self.get_most_recent()
@@ -74,10 +76,16 @@ class Robot:
                     "m": [["off"], ["off"], ["off"], ["off"]],
                     "led": [255, 255,255, 0]}
 
+
+
         self.com_tread = threading.Thread(target=self.udp.communicate, daemon=True)
+        self.udp.thread_running = True
         self.com_tread.start()
+
         self.udp.set(self.msg)
 
+    def __del__(self):
+        self.udp.thread_running = False
 
     def set_led(self, red, green, blue, blink=0):
         assert 0 <= red <= 255
