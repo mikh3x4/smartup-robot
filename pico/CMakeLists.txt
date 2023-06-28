@@ -38,6 +38,7 @@ add_executable(my_proj
 pico_enable_stdio_usb(my_proj 1)
 pico_enable_stdio_uart(my_proj 0)
 
+pico_generate_pio_header(my_proj ${CMAKE_CURRENT_LIST_DIR}/encoder.pio)
 
 # set(CMAKE_BUILD_TYPE Debug)
 target_compile_definitions(my_proj PRIVATE PARAM_ASSERTIONS_ENABLE_ALL=1)
@@ -51,6 +52,7 @@ target_link_libraries(my_proj
         pico_stdlib
         pico_multicore
         hardware_adc
+        hardware_pio
         )
 
 # create map/bin/hex/uf2 file etc.

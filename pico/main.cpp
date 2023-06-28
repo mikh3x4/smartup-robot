@@ -39,6 +39,7 @@
 #include "pico/multicore.h"
 #include "hardware/gpio.h"
 #include "hardware/adc.h"
+#include "hardware/pio.h"
 
 #include "lwip/pbuf.h"
 #include "lwip/udp.h"
@@ -53,6 +54,7 @@
 #include "command.hpp"
 #include "error.hpp"
 #include "parser.hpp"
+#include "encoder.hpp"
 
 #include "wifi_pass.h"
 
@@ -200,6 +202,7 @@ void udp_recv_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 
 MainData main_data;
 
+Encoder encoder0;
 
 
 void init(){
@@ -220,6 +223,8 @@ int main() {
 
     main_data.init();
 
+    encoder0.init(0, 2);
+
     // multicore_launch_core1(core1_entry);
 
     adc_init();
@@ -233,6 +238,7 @@ int main() {
             printf("Stale command! ESTOP\n");
             main_data.active_command->estop();
         }
+        printf("encoder count: %d\n", encoder0.get_count());
 
         const float conversion_factor = 3.3f / (1 << 12);
 
