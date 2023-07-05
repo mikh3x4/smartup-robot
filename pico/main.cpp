@@ -55,6 +55,7 @@
 #include "error.hpp"
 #include "parser.hpp"
 #include "encoder.hpp"
+#include "led.hpp"
 
 #include "wifi_pass.h"
 
@@ -203,6 +204,7 @@ void udp_recv_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 MainData main_data;
 
 Encoder encoder0;
+RBGLed rgb_led;
 
 
 void init(){
@@ -224,6 +226,7 @@ int main() {
     main_data.init();
 
     encoder0.init(0, 2);
+    rgb_led.init(0, 1, 3);
 
     // multicore_launch_core1(core1_entry);
 

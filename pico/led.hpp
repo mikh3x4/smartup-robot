@@ -8,10 +8,11 @@
 
 #include "pico/stdlib.h"
 #include "hardware/pio.h"
-#include "pwm.pio.h"
+
+#include "led_pwm.pio.h"
 
 // Write `period` to the input shift register
-void pio_pwm_set_period(PIO pio, uint sm, uint32_t period) {
+static void pio_pwm_set_period(PIO pio, uint sm, uint32_t period) {
     pio_sm_set_enabled(pio, sm, false);
     pio_sm_put_blocking(pio, sm, period);
     pio_sm_exec(pio, sm, pio_encode_pull(false, false));
@@ -19,33 +20,38 @@ void pio_pwm_set_period(PIO pio, uint sm, uint32_t period) {
     pio_sm_set_enabled(pio, sm, true);
 }
 
-// Write `level` to TX FIFO. State machine will copy this into X.
-void pio_pwm_set_level(PIO pio, uint sm, uint32_t level) {
-    pio_sm_put_blocking(pio, sm, level);
+static inline void pwm_program_init(PIO pio, uint sm, uint offset, uint pin) {
+   pio_gpio_init(pio, pin);
+   pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
+   pio_sm_config c = led_pwm_program_get_default_config(offset);
+   sm_config_set_sideset_pins(&c, pin);
+   pio_sm_init(pio, sm, offset, &c);
+
+   pio_pwm_set_period(pio, sm, 0xFF);
 }
 
-int main() {
-    stdio_init_all();
-#ifndef PICO_DEFAULT_LED_PIN
-#warning pio/pwm example requires a board with a regular LED
-    puts("Default LED pin was not defined");
-#else
 
-    // todo get free sm
-    PIO pio = pio0;
-    int sm = 0;
-    uint offset = pio_add_program(pio, &pwm_program);
-    printf("Loaded program at %d\n", offset);
+class RBGLed{
 
-    pwm_program_init(pio, sm, offset, PICO_DEFAULT_LED_PIN);
-    pio_pwm_set_period(pio, sm, (1u << 16) - 1);
+    static PIO pio;
+    public:
 
-    int level = 0;
-    while (true) {
-        printf("Level = %d\n", level);
-        pio_pwm_set_level(pio, sm, level * level);
-        level = (level + 1) % 256;
-        sleep_ms(10);
+    bool init(int red, int green, int blue){
+        uint offset = pio_add_program(pio, &led_pwm_program);
+
+        pwm_program_init(pio, 0, offset, red);
+        pwm_program_init(pio, 1, offset, green);
+        pwm_program_init(pio, 2, offset, blue);
+        return true;
     }
-#endif
-}
+
+
+    void set_color(uint8_t red, uint8_t green, uint8_t blue){
+        pio_sm_put_blocking(pio, 0, red);
+        pio_sm_put_blocking(pio, 1, green);
+        pio_sm_put_blocking(pio, 2, blue);
+    }
+
+};
+
+PIO RBGLed::pio = pio1;
