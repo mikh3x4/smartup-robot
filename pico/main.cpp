@@ -50,6 +50,7 @@
 #include "encoder.hpp"
 #include "led.hpp"
 #include "motor.hpp"
+#include "servos.hpp"
 
 #include "wifi_pass.h"
 #include "pins.h"
@@ -70,6 +71,8 @@ MotorHardware motor_1;
 MotorHardware motor_2;
 MotorHardware motor_3;
 // MotorHardware motor_4;
+
+ServosHardware servos;
 
 void init(){
     stdio_init_all();
@@ -95,6 +98,8 @@ int main() {
     motor_2.init(MOTOR_2A, MOTOR_2B, 0, ENCODER_2A, ENCODER_2B);
     motor_3.init(MOTOR_3A, MOTOR_3B, 0, ENCODER_3A, ENCODER_3B);
     // motor_4.init(MOTOR_4A, MOTOR_4B, 0, ENCODER_4A, ENCODER_4B);
+
+    servos.init();
 
     // multicore_launch_core1(core1_entry);
 
@@ -126,7 +131,6 @@ int main() {
         main_data.send_udp();
         sleep_ms(1000);
     }
-
 }
 
 

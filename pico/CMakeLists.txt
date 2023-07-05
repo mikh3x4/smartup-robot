@@ -55,6 +55,8 @@ target_link_libraries(my_proj
         hardware_adc
         hardware_pio
         hardware_pwm
+        hardware_spi
+        hardware_dma
         )
 
 # create map/bin/hex/uf2 file etc.
