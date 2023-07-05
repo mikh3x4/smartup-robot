@@ -41,23 +41,27 @@
 #include "hardware/adc.h"
 #include "hardware/pio.h"
 
-#include "lwip/pbuf.h"
-#include "lwip/udp.h"
+// #include "lwip/pbuf.h"
+// #include "lwip/udp.h"
+//
+// #define UDP_PORT 8850
+// #define BEACON_MSG_LEN_MAX 512
+// #define BEACON_TARGET "192.168.4.247"
+// #define BEACON_INTERVAL_MS 1000
 
-#define UDP_PORT 8850
-#define BEACON_MSG_LEN_MAX 512
-#define BEACON_TARGET "192.168.4.247"
-#define BEACON_INTERVAL_MS 1000
 
-
-#include "jsnm.h"
+// #include "jsnm.h"
 #include "command.hpp"
 #include "error.hpp"
-#include "parser.hpp"
+// #include "parser.hpp"
 #include "encoder.hpp"
 #include "led.hpp"
+#include "motor.hpp"
+
+#include "networking.hpp"
 
 #include "wifi_pass.h"
+#include "pins.h"
 
 
 
@@ -68,144 +72,16 @@ void core1_entry() {
 
 
 
-#define DEBUG_STRING_LEN 128
-
-class Sensors {
-    public:
-        long encoders_position[4] = {0, 1, 10, 100};
-        long encoders_speed[4] = {0, 5, 50, -500};
-        float v_bat = 3.14;
-        float temp = 20.0; //probably not needed but added as test
-        bool motor_done[4] = {0, 0, 0, 1};
-        long settings_version = 0;
-        char debug[DEBUG_STRING_LEN] = "testing";
-
-    size_t encode_json(char *js, size_t len){
-        int writen = snprintf(js, len,
-                 "{ \"vbat\": %.2f, "
-                 "\"pos\": [%ld, %ld, %ld, %ld], "
-                 "\"spd\": [%ld, %ld, %ld, %ld], "
-                 "\"done\": [%d, %d, %d, %d], "
-                 "\"debug\": \"%s\", "
-                 "\"temp\": %.2f, "
-                 "\"set_ver\": %ld }",
-                 v_bat,
-                 encoders_position[0], encoders_position[1], encoders_position[2], encoders_position[3],
-                 encoders_speed[0], encoders_speed[1], encoders_speed[2], encoders_speed[3],
-                 motor_done[0], motor_done[1], motor_done[2], motor_done[3],
-                 debug,
-                 temp,
-                 settings_version);
-
-        ASSERT( writen > 0);
-        ASSERT( writen < len);
-        return writen;
-    }
-};
 
 
-enum ROBOT_STATE {RUNNING, ESTOP, LOW_BATTERY, INIT, MULIPLE_CONTROLLERS};
+Networking main_data;
 
-
-void udp_recv_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
-
-class MainData {
-public:
-    enum ROBOT_STATE robot_data = INIT;
-    struct pbuf *current_incomming;
-
-    ParseJSON json_parser;
-
-    // Double buffer the command so one is writen to while the other is used
-    Command command_1;
-    Command command_2;
-
-    // then they are swapped
-    // THIS IS VERY THREAD SAFTLY SKETCH
-    // IT RELIES ON POINTER WRITES BEING ATTOMIC ON THE RP2040
-    Command *active_command;
-    Command *scratch_command;
-
-    Sensors sensors;
-
-    struct udp_pcb* udp_pcb;
-
-    void init_udp_receiver() {
-        struct udp_pcb* pcb = udp_new();
-        ASSERT(pcb != NULL);
-
-        if (pcb == NULL) {
-            printf("Failed to create new UDP PCB.\n");
-            return;
-        }
-
-        err_t er = udp_bind(pcb, IP_ADDR_ANY, UDP_PORT);
-        ASSERT(er == ERR_OK);
-
-        udp_recv(pcb, udp_recv_callback, this);
-    }
-
-    void init(){
-        this->udp_pcb = udp_new();
-        this->active_command = &this->command_1;
-        this->scratch_command = &this->command_2;
-
-        ipaddr_aton(BEACON_TARGET, &(this->active_command->telemetry_address));
-        this->active_command->telemetry_port = 8851;
-
-        init_udp_receiver();
-    }
-
-    void send_udp() {
-        struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, BEACON_MSG_LEN_MAX+1, PBUF_RAM);
-        char *buffer = (char *)p->payload;
-
-        size_t real_size = this->sensors.encode_json(buffer, BEACON_MSG_LEN_MAX);
-
-        pbuf_realloc(p, real_size);
-
-        err_t er = udp_sendto(this->udp_pcb, p, &(active_command->telemetry_address), active_command->telemetry_port);
-
-        printf("Sent packet: %.*s\n", p->len, buffer);
-        printf("sent to %d\n", active_command->telemetry_port);
-
-        pbuf_free(p);
-        ASSERT(er == ERR_OK);
-    }
-
-};
-
-
-void udp_recv_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port) {
-    if (p == NULL) return;
-
-    MainData *main_data_ptr = (MainData*)arg;
-
-    memcpy(&(main_data_ptr->scratch_command->telemetry_address), addr, sizeof(ip_addr_t));
-    main_data_ptr->scratch_command->telemetry_port = port;
-    main_data_ptr->scratch_command->recv_time = get_absolute_time();
-
-    char *rec = (char *)p->payload;
-    bool worked = main_data_ptr->json_parser.parse_message(rec, p->len, main_data_ptr->scratch_command);
-
-    printf("Received packet: %.*s\n", p->len ,rec);
-    pbuf_free(p);
-
-    if (worked){
-        printf("Parsed ok\n");
-
-        Command *temp = main_data_ptr->active_command;
-        main_data_ptr->active_command = main_data_ptr->scratch_command; // This line needs to be atomic
-        main_data_ptr->scratch_command = temp;
-    }
-}
-
-
-MainData main_data;
-
-Encoder encoder0;
 RBGLed rgb_led;
 
+MotorHardware motor_1;
+MotorHardware motor_2;
+MotorHardware motor_3;
+// MotorHardware motor_4;
 
 void init(){
     stdio_init_all();
@@ -225,8 +101,12 @@ int main() {
 
     main_data.init();
 
-    encoder0.init(0, 2);
-    rgb_led.init(0, 1, 3);
+    rgb_led.init(LED_RED, LED_GREEN, LED_BLUE);
+
+    motor_1.init(MOTOR_1A, MOTOR_1B, 0, ENCODER_1A, ENCODER_1B);
+    motor_2.init(MOTOR_2A, MOTOR_2B, 0, ENCODER_2A, ENCODER_2B);
+    motor_3.init(MOTOR_3A, MOTOR_3B, 0, ENCODER_3A, ENCODER_3B);
+    // motor_4.init(MOTOR_4A, MOTOR_4B, 0, ENCODER_4A, ENCODER_4B);
 
     // multicore_launch_core1(core1_entry);
 
@@ -241,7 +121,7 @@ int main() {
             printf("Stale command! ESTOP\n");
             main_data.active_command->estop();
         }
-        printf("encoder count: %d\n", encoder0.get_count());
+        printf("encoder count: %d\n", motor_1.encoder.get_count());
 
         const float conversion_factor = 3.3f / (1 << 12);
 

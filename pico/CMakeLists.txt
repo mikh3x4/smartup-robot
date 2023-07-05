@@ -54,6 +54,7 @@ target_link_libraries(my_proj
         pico_multicore
         hardware_adc
         hardware_pio
+        hardware_pwm
         )
 
 # create map/bin/hex/uf2 file etc.

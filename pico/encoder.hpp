@@ -16,18 +16,9 @@ class Encoder{
   static PIO pio;
   uint sm;
 
-// max_step_rate is used to lower the clock of the state machine to save power
-// if the application doesn't require a very high sampling rate. Passing zero
-// will set the clock to the maximum
-
-// static inline void quadrature_encoder_program_init(PIO pio, uint sm, uint pin, int max_step_rate)
-// {
-// }
-
   public:
-
-
-  bool init(uint sm, int pin){
+  bool init(uint sm, int pin, int second_pin){
+    ASSERTM((pin + 1 == second_pin), "pio encoder pins need to be consecutive");
 
     //possibly runs multiple times but each time does the same thing
     // pio = pio0;
