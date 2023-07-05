@@ -41,24 +41,15 @@
 #include "hardware/adc.h"
 #include "hardware/pio.h"
 
-// #include "lwip/pbuf.h"
-// #include "lwip/udp.h"
-//
-// #define UDP_PORT 8850
-// #define BEACON_MSG_LEN_MAX 512
-// #define BEACON_TARGET "192.168.4.247"
-// #define BEACON_INTERVAL_MS 1000
-
-
-// #include "jsnm.h"
-#include "command.hpp"
 #include "error.hpp"
-// #include "parser.hpp"
+
+#include "command.hpp"
+#include "telemetry.hpp"
+#include "networking.hpp"
+
 #include "encoder.hpp"
 #include "led.hpp"
 #include "motor.hpp"
-
-#include "networking.hpp"
 
 #include "wifi_pass.h"
 #include "pins.h"
@@ -68,9 +59,6 @@
 void core1_entry() {
         printf("hello from core 1\n");
 }
-
-
-
 
 
 
@@ -126,14 +114,14 @@ int main() {
         const float conversion_factor = 3.3f / (1 << 12);
 
         adc_select_input(0);
-        main_data.sensors.v_bat = adc_read() * conversion_factor;
+        main_data.telemetry.v_bat = adc_read() * conversion_factor;
 
         adc_select_input(4);
         float ADC_voltage = adc_read() * conversion_factor;
-        main_data.sensors.temp = 27 - (ADC_voltage - 0.706)/0.001721;
+        main_data.telemetry.temp = 27 - (ADC_voltage - 0.706)/0.001721;
 
         //random test copy
-        main_data.sensors.encoders_position[0] = main_data.active_command->servos[0].angle;
+        main_data.telemetry.encoders_position[0] = main_data.active_command->servos[0].angle;
 
         main_data.send_udp();
         sleep_ms(1000);
