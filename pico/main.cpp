@@ -73,6 +73,8 @@ int main() {
     motor_2.init(MOTOR_2A, MOTOR_2B, ENCODER_2A, ENCODER_2B);
     motor_3.init(MOTOR_3A, MOTOR_3B, ENCODER_3A, ENCODER_3B);
     // motor_4.init(MOTOR_4A, MOTOR_4B, ENCODER_4A, ENCODER_4B);
+    enable_PWM();
+
 
     // servos.init();
 
