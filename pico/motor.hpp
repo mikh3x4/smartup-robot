@@ -52,7 +52,7 @@ class MotorHardware{
         ASSERT(power > -PWM_top);
 
         uint16_t power_left,power_right;
-        constexpr uint16_t PWM_top*0.95;
+        constexpr uint16_t max_power=PWM_top*0.95;
         //we also need to clip PWM to 95% to give chance to charge pump to do it's work
         if(power < 0){
           if((-power)>max_power)
