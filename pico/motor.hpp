@@ -54,7 +54,7 @@ class MotorHardware{
     pwm_set_both_levels(slice_num,0,0);
     
     //we need inverted PWM to keep 0 as bottom MOS on
-    pwm_set_output_polarity(slice_num,true,true);
+    pwm_set_output_polarity(slice_num,false,false);
 
     //commented by desing. we need to enable them in sync at once.
     //pwm_set_enabled(slice_num, true);
@@ -83,14 +83,21 @@ class MotorHardware{
         ASSERT(power > -PWM_top);
 
         uint16_t power_left,power_right;
-
+        constexpr uint16_t PWM_top*0.95;
+        //we also need to clip PWM to 95% to give chance to charge pump to do it's work
         if(power < 0){
-          power_left=-power;
+          if((-power)>max_power)
+            power_left=max_power;
+          else
+            power_left=-power;
           power_right=0;
         }
         else{
           power_left=0;
-          power_right=power;
+          if(power>max_power)
+            power_right=max_power;
+          else
+            power_right=power;
         }
         //we need to set both channels at once
         pwm_set_both_levels(slice_num,power_left,power_right);
