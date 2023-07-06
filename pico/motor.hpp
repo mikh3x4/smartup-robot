@@ -19,8 +19,8 @@ class MotorHardware{
   public:
   Encoder encoder; //will template on this for 4th encoder
 
-  bool init(int motor_pin_a, int motor_pin_b, uint sm, int encoder_pin_a, int encoder_pin_b){
-    encoder.init(sm, encoder_pin_a, encoder_pin_b);
+  bool init(int motor_pin_a, int motor_pin_b, int encoder_pin_a, int encoder_pin_b){
+    encoder.init(encoder_pin_a, encoder_pin_b);
     pin_a = motor_pin_a;
     pin_b = motor_pin_b;
 

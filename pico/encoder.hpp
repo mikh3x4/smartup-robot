@@ -17,7 +17,7 @@ class Encoder{
   uint sm;
 
   public:
-  bool init(uint sm, int pin, int second_pin){
+  bool init(int pin, int second_pin){
     ASSERTM((pin + 1 == second_pin), "pio encoder pins need to be consecutive");
 
     if(pio == NULL){
@@ -26,6 +26,8 @@ class Encoder{
     }
 
     // quadrature_encoder_program_init(pio, sm, pin, 0);
+    sm = pio_claim_unused_sm(pio, false);
+    ASSERTM(sm >=0, "Can't initalize PIO");
 
     pio_sm_set_consecutive_pindirs(pio, sm, pin, 2, false);
     gpio_pull_up(pin);

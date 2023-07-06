@@ -73,11 +73,16 @@ public:
         struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, BEACON_MSG_LEN_MAX+1, PBUF_RAM);
         char *buffer = (char *)p->payload;
 
+        printf("u 0\n");
         size_t real_size = this->telemetry.encode_json(buffer, BEACON_MSG_LEN_MAX);
+        printf("u 1\n");
 
         pbuf_realloc(p, real_size);
+        printf("u 2\n");
 
         err_t er = udp_sendto(this->udp_pcb, p, &(active_command->telemetry_address), active_command->telemetry_port);
+
+        printf("u 3\n");
 
         printf("Sent packet: %.*s\n", p->len, buffer);
         printf("sent to %d\n", active_command->telemetry_port);
