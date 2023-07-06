@@ -20,10 +20,10 @@ class Encoder{
   bool init(uint sm, int pin, int second_pin){
     ASSERTM((pin + 1 == second_pin), "pio encoder pins need to be consecutive");
 
-    //possibly runs multiple times but each time does the same thing
-    // pio = pio0;
-
-    pio_add_program(pio, &quadrature_encoder_program);
+    if(pio == NULL){
+      pio = pio0;
+      pio_add_program(pio, &quadrature_encoder_program);
+    }
 
     // quadrature_encoder_program_init(pio, sm, pin, 0);
 
@@ -75,6 +75,6 @@ class Encoder{
 
 };
 
-PIO Encoder::pio = pio0;
+PIO Encoder::pio = NULL;
 
 

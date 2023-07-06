@@ -92,23 +92,35 @@ int main() {
 
     main_data.init();
 
-    rgb_led.init(LED_RED, LED_GREEN, LED_BLUE);
+    // rgb_led.init(LED_RED, LED_GREEN, LED_BLUE);
+    //
+
+    gpio_init(LED_RED);
+    gpio_set_dir(LED_RED, GPIO_OUT);
+    gpio_init(LED_GREEN);
+    gpio_set_dir(LED_GREEN, GPIO_OUT);
+    gpio_init(LED_BLUE);
+    gpio_set_dir(LED_BLUE, GPIO_OUT);
+
+        printf("here 0\n");
 
     motor_1.init(MOTOR_1A, MOTOR_1B, 0, ENCODER_1A, ENCODER_1B);
-    motor_2.init(MOTOR_2A, MOTOR_2B, 0, ENCODER_2A, ENCODER_2B);
-    motor_3.init(MOTOR_3A, MOTOR_3B, 0, ENCODER_3A, ENCODER_3B);
+    motor_2.init(MOTOR_2A, MOTOR_2B, 1, ENCODER_2A, ENCODER_2B);
+    motor_3.init(MOTOR_3A, MOTOR_3B, 2, ENCODER_3A, ENCODER_3B);
     // motor_4.init(MOTOR_4A, MOTOR_4B, 0, ENCODER_4A, ENCODER_4B);
 
-    servos.init();
+    // servos.init();
 
     // multicore_launch_core1(core1_entry);
-
+    //
+        printf("here 1\n");
     adc_init();
     adc_gpio_init(26);
     adc_set_temp_sensor_enabled(true);
     adc_select_input(0);
 
 
+        printf("here 2\n");
     while (1) {
         if( absolute_time_diff_us(main_data.active_command->recv_time, get_absolute_time()) > 500000) {
             printf("Stale command! ESTOP\n");
@@ -129,7 +141,25 @@ int main() {
         main_data.telemetry.encoders_position[0] = main_data.active_command->servos[0].angle;
 
         main_data.send_udp();
+
         sleep_ms(1000);
+        // printf("on\n");
+
+        gpio_put(LED_RED, 1);
+        gpio_put(LED_GREEN, 1);
+        gpio_put(LED_BLUE, 1);
+        sleep_ms(1000);
+        // printf("off\n");
+        gpio_put(LED_RED, 0);
+        gpio_put(LED_GREEN, 0);
+        gpio_put(LED_BLUE, 0);
+
+        // rgb_led.set_color(255, 0, 0);
+        // sleep_ms(1000);
+        // rgb_led.set_color(0, 255, 0);
+        // sleep_ms(1000);
+        // rgb_led.set_color(0, 0, 255);
+        // sleep_ms(1000);
     }
 }
 
