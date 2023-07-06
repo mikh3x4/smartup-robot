@@ -34,9 +34,10 @@ class MotorHardware{
     ASSERTM(slice_num == other_slice_num, "One motor's pwm pins need to be on the same pwm slice!");
 
     pwm_set_wrap(slice_num, PWM_top);
-
-    pwm_set_gpio_level(pin_a, 0);
-    pwm_set_gpio_level(pin_b, 0);
+    //no prescaler we run at full 125Mhz
+    pwm_set_clkdiv_int_frac(slice_num,1,0);
+    
+    pwm_set_both_levels(slice_num,0,0);
     
     //we need inverted PWM to keep 0 as bottom MOS on
     pwm_set_output_polarity(slice_num,true,true);
@@ -47,20 +48,21 @@ class MotorHardware{
   }
 
     void drive_power(int power){
-        ASSERT(power < 256);
-        ASSERT(power > -256);
+        ASSERT(power < PWM_top);
+        ASSERT(power > -PWM_top);
 
-        int current_pin = pin_b;
-        int other_pin = pin_a;
+        uint16_t power_left,power_right;
 
         if(power < 0){
-            current_pin = pin_a;
-            other_pin = pin_b;
-            power = -power;
+          power_left=-power;
+          power_right=0;
         }
-
-        pwm_set_gpio_level(other_pin, 0);
-        pwm_set_gpio_level(current_pin, power);
+        else{
+          power_left=0;
+          power_right=power;
+        }
+        //we need to set both channels at once
+        pwm_set_both_levels(slice_num,power_left,power_right);
     }
 
     // TODO Implement more of them
