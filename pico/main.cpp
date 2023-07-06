@@ -1,33 +1,3 @@
-/**
- * Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
- *
- * SPDX-License-Identifier: BSD-3-Clause
- */
-
-// #include "pico/stdlib.h"
-//
-// int main() {
-// #ifndef PICO_DEFAULT_LED_PIN
-// #warning blink example requires a board with a regular LED
-// #else
-//     const uint LED_PIN = PICO_DEFAULT_LED_PIN;
-//     gpio_init(LED_PIN);
-//     gpio_set_dir(LED_PIN, GPIO_OUT);
-//     while (true) {
-//         gpio_put(LED_PIN, 1);
-//         sleep_ms(250);
-//         gpio_put(LED_PIN, 0);
-//         sleep_ms(250);
-//     }
-// #endif
-// }
-
-
-/**
- * Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
- *
- * SPDX-License-Identifier: BSD-3-Clause
- */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +21,7 @@
 #include "led.hpp"
 #include "motor.hpp"
 #include "servos.hpp"
+#include "v_bat.hpp"
 
 #include "wifi_pass.h"
 #include "pins.h"
@@ -74,6 +45,8 @@ MotorHardware motor_3;
 
 ServosHardware servos;
 
+ADC adc;
+
 void init(){
     stdio_init_all();
 
@@ -94,6 +67,8 @@ int main() {
 
     rgb_led.init(LED_RED, LED_GREEN, LED_BLUE);
 
+    adc.init();
+
     motor_1.init(MOTOR_1A, MOTOR_1B, ENCODER_1A, ENCODER_1B);
     motor_2.init(MOTOR_2A, MOTOR_2B, ENCODER_2A, ENCODER_2B);
     motor_3.init(MOTOR_3A, MOTOR_3B, ENCODER_3A, ENCODER_3B);
@@ -103,26 +78,19 @@ int main() {
 
     // multicore_launch_core1(core1_entry);
     //
-    adc_init();
-    adc_gpio_init(26);
-    adc_set_temp_sensor_enabled(true);
-    adc_select_input(0);
+    // adc_init();
+    // adc_gpio_init(26);
+    // adc_set_temp_sensor_enabled(true);
+    // adc_select_input(0);
 
     while (1) {
         if( absolute_time_diff_us(main_data.active_command->recv_time, get_absolute_time()) > 500000) {
             printf("Stale command! ESTOP\n");
             main_data.active_command->estop();
         }
-        printf("encoder count: %d\n", motor_1.encoder.get_count());
 
-        const float conversion_factor = 3.3f / (1 << 12);
-
-        adc_select_input(0);
-        main_data.telemetry.v_bat = adc_read() * conversion_factor;
-
-        adc_select_input(4);
-        float ADC_voltage = adc_read() * conversion_factor;
-        main_data.telemetry.temp = 27 - (ADC_voltage - 0.706)/0.001721;
+        main_data.telemetry.v_bat = adc.get_vbat();
+        main_data.telemetry.temp = adc.get_core_temp();
 
         main_data.telemetry.encoders_position[0] = motor_1.encoder.get_count();
         main_data.telemetry.encoders_position[1] = motor_2.encoder.get_count();
