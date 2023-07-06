@@ -12,14 +12,13 @@ class ADC{
 public:
     bool init(){
         adc_init();
-        adc_gpio_init(26);
+        adc_gpio_init(VBAT_PIN);
         adc_set_temp_sensor_enabled(true);
-        adc_select_input(0);
         return true;
     }
 
     float get_vbat(){
-        adc_select_input(0);
+        adc_select_input(VBAT_ADC);
         float ADC_voltage = adc_read() * conversion_factor;
         return ADC_voltage;
     }
