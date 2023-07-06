@@ -22,6 +22,7 @@
 //     float ki = 0.0;
 //     float kd = 0.0;
 // } Motor;
+const uint16_t PWM_top=1000-1;
 
 class MotorHardware{
 
@@ -46,12 +47,16 @@ class MotorHardware{
 
     ASSERTM(slice_num == other_slice_num, "One motor's pwm pins need to be on the same pwm slice!");
 
-    pwm_set_wrap(slice_num, 0xFF);
+    pwm_set_wrap(slice_num, PWM_top);
 
     pwm_set_gpio_level(pin_a, 0);
     pwm_set_gpio_level(pin_b, 0);
+    
+    //we need inverted PWM to keep 0 as bottom MOS on
+    pwm_set_output_polarity(slice_num,true,true);
 
-    pwm_set_enabled(slice_num, true);
+    //commented by desing. we need to enable them in sync at once.
+    //pwm_set_enabled(slice_num, true);
     return true;
   }
 
@@ -99,3 +104,13 @@ class MotorHardware{
 
 };
 
+static void inline enable_PWM()
+{
+    //set PWMs 90 degrees out of phase for lower noise
+    pwm_set_counter(0,0*PWM_top/4);
+    pwm_set_counter(1,1*PWM_top/4);
+    pwm_set_counter(2,2*PWM_top/4);
+    pwm_set_counter(5,3*PWM_top/4);
+    //enable all channels at once
+    pwm_set_mask_enabled(0b100111);
+}
