@@ -74,7 +74,7 @@ class Robot:
         self.msg = {"p": password,
                     "s": [None, None, None, None],
                     "m": [["off"], ["off"], ["off"], ["off"]],
-                    "led": [255, 255,255, 0]}
+                    "led": [0, 255, 0, 0]}
 
 
 
