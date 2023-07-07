@@ -42,7 +42,7 @@ class MotorHardware{
     //we need inverted PWM to keep 0 as bottom MOS on
     pwm_set_output_polarity(slice_num,false,false);
 
-    //commented by desing. we need to enable them in sync at once.
+    //commented by design. we need to enable them in sync at once.
     //pwm_set_enabled(slice_num, true);
     return true;
   }
