@@ -36,6 +36,7 @@
 #define MOTOR_4A 27
 #define MOTOR_4B 26
 
-
+//for timing servos
+#define DMA_PWM_SLICE 3
 
 
