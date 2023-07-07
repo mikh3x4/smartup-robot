@@ -46,6 +46,10 @@ class RBGLed{
     uint red_sm;
     uint green_sm;
     uint blue_sm;
+
+    absolute_time_t last_flip; 
+    bool flip_dir;
+
     public:
 
     bool init(int red, int green, int blue){
@@ -59,14 +63,35 @@ class RBGLed{
         red_sm = pwm_program_init(pio, offset, red);
         green_sm = pwm_program_init(pio, offset, green);
         blue_sm = pwm_program_init(pio, offset, blue);
+
+        last_flip = get_absolute_time();
         return true;
     }
 
 
-    void set_color(int16_t red, int16_t green, int16_t blue){
-        pio_sm_put_blocking(pio, red_sm, red);
-        pio_sm_put_blocking(pio, green_sm, green);
-        pio_sm_put_blocking(pio, blue_sm, blue);
+    void set_color(int16_t red, int16_t green, int16_t blue, uint16_t blink){
+        if(blink == 0){
+            pio_sm_put_blocking(pio, red_sm, red);
+            pio_sm_put_blocking(pio, green_sm, green);
+            pio_sm_put_blocking(pio, blue_sm, blue);
+            return;
+        }
+
+        if(flip_dir){
+            pio_sm_put_blocking(pio, red_sm, red);
+            pio_sm_put_blocking(pio, green_sm, green);
+            pio_sm_put_blocking(pio, blue_sm, blue);
+        }else{
+            pio_sm_put_blocking(pio, red_sm, 0);
+            pio_sm_put_blocking(pio, green_sm, 0);
+            pio_sm_put_blocking(pio, blue_sm, 0);
+        }
+
+        if(get_absolute_time() > last_flip + 1000*blink){
+            last_flip = get_absolute_time();
+            flip_dir = not flip_dir;
+        }
+
     }
 
 };

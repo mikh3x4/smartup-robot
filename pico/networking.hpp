@@ -79,7 +79,7 @@ public:
 
         err_t er = udp_sendto(this->udp_pcb, p, &(active_command->telemetry_address), active_command->telemetry_port);
 
-        printf("Sent packet: %.*s\n", p->len, buffer);
+        // printf("Sent packet: %.*s\n", p->len, buffer);
 
         pbuf_free(p);
         ASSERT(er == ERR_OK);
@@ -104,7 +104,7 @@ void udp_recv_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
     pbuf_free(p);
 
     if (worked){
-        printf("Parsed ok\n");
+        // printf("Parsed ok\n");
 
         Command *temp = main_data_ptr->active_command;
         main_data_ptr->active_command = main_data_ptr->scratch_command; // This line needs to be atomic

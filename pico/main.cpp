@@ -77,11 +77,6 @@ int main() {
     // servos.init();
 
     // multicore_launch_core1(core1_entry);
-    //
-    // adc_init();
-    // adc_gpio_init(26);
-    // adc_set_temp_sensor_enabled(true);
-    // adc_select_input(0);
 
     while (1) {
         if( absolute_time_diff_us(main_data.active_command->recv_time, get_absolute_time()) > 500000) {
@@ -96,6 +91,10 @@ int main() {
         main_data.telemetry.encoders_position[1] = motor_2.encoder.get_count();
         main_data.telemetry.encoders_position[2] = motor_3.encoder.get_count();
 
+
+        motor_1.exec_command(main_data.active_command->motors[0]);
+        motor_2.exec_command(main_data.active_command->motors[1]);
+
         //random test copy
         main_data.telemetry.encoders_position[3] = main_data.active_command->servos[0].angle;
 
@@ -103,7 +102,10 @@ int main() {
 
         sleep_ms(100);
 
-        rgb_led.set_color(main_data.active_command->led.red, main_data.active_command->led.green, main_data.active_command->led.blue);
+        rgb_led.set_color(main_data.active_command->led.red,
+                          main_data.active_command->led.green,
+                          main_data.active_command->led.blue,
+                          main_data.active_command->led.blink);
 
     }
 }
