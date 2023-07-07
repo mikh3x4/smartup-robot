@@ -17,13 +17,13 @@
 // #define SERVO_CLK 6
 // #define SERVO_DATA 7
 
-const uint transfer_length=1501;
+const uint transfer_length=2001;
 
 class ServosHardware{
     private:
     uint8_t dma_channel,reload_channel;
     //to be sure it's allocated statically and just once
-    static uint8_t txbuf[transfer_length];
+    uint8_t txbuf[transfer_length];
     uint8_t *txbuf_pointer;
     uint16_t servo_value[4];
     bool servo_power[4];
@@ -93,7 +93,7 @@ class ServosHardware{
         channel_config_set_dreq(&c, 24+DMA_PWM_SLICE);
         dma_channel_configure(reload_channel, &c,
                             &(dma_hw->ch[dma_channel].al3_read_addr_trig), //write address (trigger of previous dma)
-                            txbuf_pointer, // read address
+                            &txbuf_pointer, // read address
                             0xffffff, // with 50hz load rate this should be sufficient for 23khours
                             true); // start
 
@@ -105,8 +105,8 @@ class ServosHardware{
         ASSERT(servo_number>=0);
         ASSERT(servo_number<4);
         //TODO: implement actual angle to pulse width conversion
-        ASSERT(angle>500);
-        ASSERT(angle<1500);
+        ASSERT(angle>=1000);
+        ASSERT(angle<=2000);
         servo_value[servo_number]=angle;
         generate_array();
     }
