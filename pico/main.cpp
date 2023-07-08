@@ -120,7 +120,7 @@ int main() {
         // motor_1.exec_command(main_data.active_command->motors[0]);
         motor_2.exec_command(main_data.active_command->motors[1]);
         motor_3.exec_command(main_data.active_command->motors[2]);
-        motor_4.exec_command(main_data.active_command->motors[4]);
+        motor_4.exec_command(main_data.active_command->motors[3]);
 
         rgb_led.set_color(main_data.active_command->led.red,
                           main_data.active_command->led.green,

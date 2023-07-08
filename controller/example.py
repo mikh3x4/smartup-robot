@@ -19,15 +19,13 @@ while 1:
     commands = g.get()
     # print(commands)
 
-    right = map(commands["ry"], -1, 1, -255, 255)
-    left = map(commands["ly"], -1, 1, -255, 255)
+    right = map(commands["ry"], -1, 1, -1000, 1000)
+    left = map(commands["ly"], -1, 1, -1000, 1000)
 
     print(left, right)
 
-    # r.set_motor_power(0, right)
-    # r.set_motor_power(1, -left)
-
-
+    r.set_motor_power(1, right)
+    r.set_motor_power(2, -left)
 
     r.set_led( map(commands["ry"], -1, 1, 0, 255), map(commands["ly"], -1, 1, 0, 255), 0)
 
