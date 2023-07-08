@@ -125,7 +125,7 @@ class Robot:
 
     def set_motor_power(self, index, power):
         assert 0 <= index <= 3
-        assert -255 <= power <= 255
+        # assert -255 <= power <= 255
         self.msg["m"][index] = ["pwr", power]
         self.udp.set(self.msg)
 
