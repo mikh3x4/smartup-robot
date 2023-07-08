@@ -80,3 +80,112 @@ class Encoder{
 PIO Encoder::pio = NULL;
 
 
+
+///////////////////////////////////////
+
+
+//
+// inline static gpio_irq_callback_t isr_list[32];
+//
+// static void do_nothing(uint gpio, uint32_t events) {}
+//
+// static void gpio_callback(uint gpio, uint32_t events);
+
+class InteruptEncoder{
+
+  static int count;
+  static char state;
+
+  static int pin_A;
+  static int pin_B;
+
+  public:
+  bool init(int pin, int second_pin){
+
+
+   // for (int c = 0; c < 2; ++c)
+   //  {
+   //      for (int p = 0; p <= 32; ++p)
+   //      {
+   //          isr_list[c][p] = do_nothing;
+   //      }
+   //  }
+
+
+    gpio_init(pin);
+    gpio_init(second_pin);
+    gpio_set_dir(pin, GPIO_IN);
+    gpio_set_dir(second_pin, GPIO_IN);
+
+    pin_A = pin;
+    pin_B = second_pin;
+    count = 0;
+    state = (gpio_get(second_pin) << 1) | gpio_get(pin);
+
+    return true;
+  }
+
+
+  static void gpio_callback(uint gpio, uint32_t events) {
+      char mask = 1;
+      if (gpio == pin_B){
+        mask = mask << 1;
+      }else if(gpio == pin_A){
+        mask = mask;
+      }else{
+        return;
+      }
+
+    char new_state;
+     if (events == GPIO_IRQ_EDGE_RISE){
+        new_state = state | mask;
+    }else{
+        new_state = state & (~mask);
+    }
+
+    char state_tuple = (state << 2) | new_state;
+
+    switch(state_tuple){
+      case 0b0000:          break;
+      case 0b0001: count--; break;
+      case 0b0010: count++; break;
+      case 0b0011:          break;
+
+      case 0b0100: count++; break;
+      case 0b0101:          break;
+      case 0b0110:          break;
+      case 0b0111: count--; break;
+
+      case 0b1000: count--; break;
+      case 0b1001:          break;
+      case 0b1010:          break;
+      case 0b1011: count++; break;
+
+      case 0b1100:          break;
+      case 0b1101: count++; break;
+      case 0b1110: count--; break;
+      case 0b1111:          break;
+
+    }
+    state = new_state;
+  }
+  
+  bool init_core_sepecific(){
+    gpio_set_irq_enabled(pin_A, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true);
+    gpio_set_irq_enabled(pin_B, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true);
+
+    gpio_set_irq_callback(&gpio_callback);
+    irq_set_enabled(IO_IRQ_BANK0, true);
+    return true;
+  }
+
+  int get_count(){
+    return count;
+  }
+
+};
+
+int InteruptEncoder::count;
+char InteruptEncoder::state;
+int InteruptEncoder::pin_A;
+int InteruptEncoder::pin_B;

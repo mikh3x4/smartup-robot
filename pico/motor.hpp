@@ -24,6 +24,7 @@
 // } Motor;
 const uint16_t PWM_top=1000-1;
 
+template <typename EncoderType>
 class MotorHardware{
 
   int pin_a;
@@ -32,7 +33,7 @@ class MotorHardware{
   uint slice_num;
 
   public:
-  Encoder encoder; //will template on this for 4th encoder
+  EncoderType encoder; //will template on this for 4th encoder
 
   bool init(int motor_pin_a, int motor_pin_b, int encoder_pin_a, int encoder_pin_b){
     encoder.init(encoder_pin_a, encoder_pin_b);
