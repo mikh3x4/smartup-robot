@@ -1,6 +1,10 @@
 
 #pragma once
 
+// #include "networking.hpp"
+// extern Networking main_data;
+// #define DEBUG_PRINT main_data.telemetry.debug_print
+// #include "debug_print.hpp"
 
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
@@ -30,6 +34,7 @@ void panic(){
         sleep_ms(100);
         cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
         sleep_ms(100);
+        // main_data.send_udp();
     }
 }
 

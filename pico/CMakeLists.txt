@@ -29,6 +29,7 @@ pico_sdk_init()
 
 add_executable(my_proj
         main.cpp
+        networking.cpp
         )
 
 # pull in common dependencies
