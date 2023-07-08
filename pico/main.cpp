@@ -38,7 +38,7 @@ Networking main_data;
 
 RBGLed rgb_led;
 
-// MotorHardware motor_1;
+// MotorHardware motor_1; //Waiting for interupt encoders, probably can wait
 MotorHardware motor_2;
 MotorHardware motor_3;
 MotorHardware motor_4;
@@ -103,44 +103,32 @@ int main() {
         main_data.telemetry.clear_debug();
         if( absolute_time_diff_us(main_data.active_command->recv_time, get_absolute_time()) > 500000) {
             printf("Stale command! ESTOP\n");
-            main_data.telemetry.debug_print("ESTOP\n");
+            DEBUG_PRINT("Stale Cmd! ESTOP\n");
             main_data.active_command->estop();
         }
 
-    //     main_data.telemetry.v_bat = adc.get_vbat();
-    //     main_data.telemetry.temp = adc.get_core_temp();
+        main_data.telemetry.v_bat = adc.get_vbat();
+        main_data.telemetry.temp = adc.get_core_temp();
 
     //     main_data.telemetry.encoders_position[0] = motor_1.encoder.get_count();
     //     main_data.telemetry.encoders_position[1] = motor_2.encoder.get_count();
     //     main_data.telemetry.encoders_position[2] = motor_3.encoder.get_count();
 
-        main_data.telemetry.debug_print("test print\n");
-        main_data.telemetry.debug_print("hello %f\n", adc.get_vbat());
-        main_data.telemetry.debug_print("led red%d\n", main_data.active_command->led.red);
-        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 1");
-        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 2");
-        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 3");
-        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 4");
-        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 5");
-        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 6");
-        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 7");
-        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 8");
-        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 9");
-        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 0");
+        DEBUG_PRINT("test print\n");
+        DEBUG_PRINT("hello %f\n", adc.get_vbat());
 
-        motor_2.exec_command(main_data.active_command->motors[0]);
-        motor_3.exec_command(main_data.active_command->motors[1]);
+        // motor_1.exec_command(main_data.active_command->motors[0]);
+        motor_2.exec_command(main_data.active_command->motors[1]);
+        motor_3.exec_command(main_data.active_command->motors[2]);
+        motor_4.exec_command(main_data.active_command->motors[4]);
 
-        //random test copy
-        main_data.telemetry.encoders_position[3] = main_data.active_command->servos[0].angle;
-
-        main_data.send_udp();
-
-        sleep_ms(10);
         rgb_led.set_color(main_data.active_command->led.red,
                           main_data.active_command->led.green,
                           main_data.active_command->led.blue,
                           main_data.active_command->led.blink);
+
+        main_data.send_udp();
+        sleep_ms(10);
 
     }
 }

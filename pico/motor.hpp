@@ -65,11 +65,11 @@ class MotorHardware{
     void exec_command(Motor command){
     switch (command.mode){
       case OFF:
-        printf("motor off \n");
+        DEBUG_PRINT("motor off \n");
         drive_power(0);
         break;
       case POWER:
-        printf("motor %d\n", command.power);
+        DEBUG_PRINT("motor %d\n", command.power);
         drive_power(command.power);
         break;
       default:

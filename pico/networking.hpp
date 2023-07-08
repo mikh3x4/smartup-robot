@@ -111,3 +111,7 @@ void udp_recv_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
         main_data_ptr->scratch_command = temp;
     }
 }
+
+extern Networking main_data;
+#define DEBUG_PRINT main_data.telemetry.debug_print
+
