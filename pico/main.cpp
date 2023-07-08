@@ -50,9 +50,9 @@ void init(){
     ASSERTM(not cyw43_arch_init(), "failed to initialise\n");
     cyw43_arch_enable_sta_mode();
 
-    // printf("Connecting to %s Wi-Fi...\n", WIFI_SSID);
-    // ASSERTM(not cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000), "failed to connect to wifi\n");
-    // printf("Connected.\n");
+    printf("Connecting to %s Wi-Fi...\n", WIFI_SSID);
+    ASSERTM(not cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000), "failed to connect to wifi\n");
+    printf("Connected.\n");
 }
 
 void core1_entry() {
@@ -66,19 +66,19 @@ void core1_entry() {
 int main() {
     init();
 
-    // main_data.init();
+    main_data.init();
 
-    // rgb_led.init(LED_RED, LED_GREEN, LED_BLUE);
-    //
-    // adc.init();
+    rgb_led.init(LED_RED, LED_GREEN, LED_BLUE);
+
+    adc.init();
 
     // motor_1.init(MOTOR_1A, MOTOR_1B, ENCODER_1A, ENCODER_1B);
     motor_2.init(MOTOR_2A, MOTOR_2B, ENCODER_2A, ENCODER_2B);
-    // motor_3.init(MOTOR_3A, MOTOR_3B, ENCODER_3A, ENCODER_3B);
-    // motor_4.init(MOTOR_4A, MOTOR_4B, ENCODER_4A, ENCODER_4B);
-    // enable_PWM();
+    motor_3.init(MOTOR_3A, MOTOR_3B, ENCODER_3A, ENCODER_3B);
+    motor_4.init(MOTOR_4A, MOTOR_4B, ENCODER_4A, ENCODER_4B);
+    enable_PWM();
 
-    // servos.init();
+    servos.init();
 
     multicore_launch_core1(core1_entry);
 
@@ -101,10 +101,10 @@ int main() {
     //     counter++;
     // }
 
-    while (1) {
-        printf("encoder 2 %d\n", motor_2.encoder.get_count());
-        sleep_ms(100);
-    }
+    // while (1) {
+    //     printf("encoder 2 %d\n", motor_2.encoder.get_count());
+    //     sleep_ms(100);
+    // }
 
     while (1) {
         main_data.telemetry.clear_debug();
@@ -126,7 +126,7 @@ int main() {
         DEBUG_PRINT("hello %f\n", adc.get_vbat());
 
         // motor_1.exec_command(main_data.active_command->motors[0]);
-        // motor_2.exec_command(main_data.active_command->motors[1]);
+        motor_2.exec_command(main_data.active_command->motors[1]);
         motor_3.exec_command(main_data.active_command->motors[2]);
         motor_4.exec_command(main_data.active_command->motors[3]);
 
