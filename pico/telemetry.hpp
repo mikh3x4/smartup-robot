@@ -4,9 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <stdarg.h>
+
 #include "error.hpp"
 
-#define DEBUG_STRING_LEN 128
+#define DEBUG_STRING_LEN 256
 
 class Telemetry {
     public:
@@ -17,6 +19,27 @@ class Telemetry {
         bool motor_done[4] = {0, 0, 0, 1};
         long settings_version = 0;
         char debug[DEBUG_STRING_LEN] = "testing";
+
+    void clear_debug(){
+        debug[0] = '\0';
+    }
+
+    // int snprintf(char *str, size_t size, const char *format, ...);
+    size_t debug_print(const char * format, ...){
+        size_t bufferLength = strlen(debug);
+
+        ASSERT(bufferLength < DEBUG_STRING_LEN);
+        if (bufferLength + 1 == DEBUG_STRING_LEN)
+            return 0;
+
+        va_list args;
+        va_start(args, format);
+        size_t written = vsnprintf(debug + bufferLength , DEBUG_STRING_LEN - bufferLength, format, args);
+        va_end(args);
+
+        return written;
+    }
+
 
     size_t encode_json(char *js, size_t len){
         int writen = snprintf(js, len,

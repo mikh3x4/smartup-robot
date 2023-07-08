@@ -40,9 +40,7 @@ class UDP:
         if data is None:
             return None
 
-        # print(data)
-
-        return json.loads( data.decode() )
+        return json.loads( data.decode(), strict=False)
 
 
     def communicate(self):
@@ -51,7 +49,7 @@ class UDP:
 
         # try:
         while self.thread_running:
-            time.sleep(0.1)
+            time.sleep(0.05)
             self.send_message(self.outgoing)
             incoming = self.get_most_recent()
             if incoming != None:

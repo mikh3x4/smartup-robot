@@ -59,11 +59,11 @@ class MotorHardware{
     void exec_command(Motor command){
     switch (command.mode){
       case OFF:
-        printf("motor off");
+        printf("motor off \n");
         drive_power(0);
         break;
       case POWER:
-        printf("motor %d", command.power);
+        printf("motor %d\n", command.power);
         drive_power(command.power);
         break;
       default:
@@ -85,8 +85,10 @@ class MotorHardware{
             power = -power;
         }
 
-        pwm_set_gpio_level(other_pin, 0);
-        pwm_set_gpio_level(current_pin, power);
+        printf("pin %d, \t power %d\n", other_pin, 0);
+        printf("pin %d, \t power %d\n", current_pin, power);
+        // pwm_set_gpio_level(other_pin, 0);
+        // pwm_set_gpio_level(current_pin, power);
     }
 
     // TODO Implement more of them

@@ -12,7 +12,7 @@
 #include "lwip/udp.h"
 
 #define UDP_PORT 8850
-#define BEACON_MSG_LEN_MAX 512
+#define BEACON_MSG_LEN_MAX 1024
 #define BEACON_TARGET "192.168.4.247"
 #define BEACON_INTERVAL_MS 1000
 
@@ -100,7 +100,7 @@ void udp_recv_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
     char *rec = (char *)p->payload;
     bool worked = main_data_ptr->json_parser.parse_message(rec, p->len, main_data_ptr->scratch_command);
 
-    printf("Received packet: %.*s\n", p->len ,rec);
+    // printf("Received packet: %.*s\n", p->len ,rec);
     pbuf_free(p);
 
     if (worked){

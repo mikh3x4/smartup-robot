@@ -79,8 +79,10 @@ int main() {
     // multicore_launch_core1(core1_entry);
 
     while (1) {
+        main_data.telemetry.clear_debug();
         if( absolute_time_diff_us(main_data.active_command->recv_time, get_absolute_time()) > 500000) {
             printf("Stale command! ESTOP\n");
+            main_data.telemetry.debug_print("ESTOP\n");
             main_data.active_command->estop();
         }
 
@@ -91,6 +93,19 @@ int main() {
         main_data.telemetry.encoders_position[1] = motor_2.encoder.get_count();
         main_data.telemetry.encoders_position[2] = motor_3.encoder.get_count();
 
+        main_data.telemetry.debug_print("test print\n");
+        main_data.telemetry.debug_print("hello %f\n", adc.get_vbat());
+        main_data.telemetry.debug_print("led red%d\n", main_data.active_command->led.red);
+        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 1");
+        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 2");
+        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 3");
+        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 4");
+        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 5");
+        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 6");
+        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 7");
+        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 8");
+        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 9");
+        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 0");
 
         motor_1.exec_command(main_data.active_command->motors[0]);
         motor_2.exec_command(main_data.active_command->motors[1]);
@@ -100,7 +115,7 @@ int main() {
 
         main_data.send_udp();
 
-        sleep_ms(100);
+        sleep_ms(10);
 
         rgb_led.set_color(main_data.active_command->led.red,
                           main_data.active_command->led.green,

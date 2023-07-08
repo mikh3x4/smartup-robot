@@ -1,8 +1,7 @@
 
 
 import hid
-
-
+import time
 
 
 class PS4Controller():
@@ -15,20 +14,37 @@ class PS4Controller():
         self.g.set_nonblocking(True)
 
         self.report = None
+        self.last_update = time.monotonic()
 
     def update(self):
         report = self.g.read(64)
         if report:
             self.report = report
             print(report)
-    
-    def get(self):
+
+    def get_most_recent(self):
         while 1:
             report = self.g.read(64)
             if report:
                 break
 
-        return parse_ps4_report(report)
+    
+    def get(self):
+        while 1:
+            report = self.g.read(64)
+            if not report:
+                break
+            else:
+                self.report = report
+                self.last_update = time.monotonic()
+
+        if self.report is None:
+            return None
+
+        if self.last_update + 0.5 < time.monotonic():
+            return None
+
+        return parse_ps4_report(self.report)
 
 
     def send_commands(self):
@@ -59,23 +75,7 @@ def parse_ps4_report(report):
 
     dpad_states = ["up", "up_right", "right", "down_right", "down", "down_left", "left", "up_left", "none"]
 
-    # parse 16-bit signed little-endian values for acceleration and rotation
-    gyro_x = int.from_bytes(report[13:15], byteorder='little', signed=True) / 16.4# in g's
-    gyro_y = int.from_bytes(report[15:17], byteorder='little', signed=True) / 16.4# in g's
-    gyro_z = int.from_bytes(report[17:19], byteorder='little', signed=True) / 16.4# in g's
-    accel_x = int.from_bytes(report[19:21], byteorder='little', signed=True) / 8192.0  # in deg/s
-    accel_y = int.from_bytes(report[21:23], byteorder='little', signed=True) / 8192.0  # in deg/s
-    accel_z = int.from_bytes(report[23:25], byteorder='little', signed=True) / 8192.0  # in deg/s
-
-    # get touchpad finger position data
-    touchpad_finger1_event = report[35] & 0x80 == 0  # touch event start (finger 1 down)
-    touchpad_finger1_id = report[35] & 0x7F  # unique identifier for the first finger touch event
-    touchpad_finger1_x = report[36] | ((report[37] & 0x0F) << 8)  # x position of finger 1 touch event
-    #fixed from     # https://github.com/chrippa/ds4drv/blob/master/ds4drv/device.py
-    touchpad_finger1_y = (report[38] << 4) | ((report[37] & 0xf0) >> 4)  # y position of finger 1 touch event
-
-
-    return {
+    out = {
         "dpad_up": dpad_states[report[5] & 0xF] == "up" or dpad_states[report[5] & 0xF] == "up_right" or dpad_states[report[5] & 0xF] == "up_left",
         "dpad_down": dpad_states[report[5] & 0xF] == "down" or dpad_states[report[5] & 0xF] == "down_right" or dpad_states[report[5] & 0xF] == "down_left",
         "dpad_left": dpad_states[report[5] & 0xF] == "left" or dpad_states[report[5] & 0xF] == "up_left" or dpad_states[report[5] & 0xF] == "down_left",
@@ -99,8 +99,28 @@ def parse_ps4_report(report):
         "rx": normalize_stick(report[3]),
         "ry": -normalize_stick(report[4]),
         "l2_trigger": normalize_trigger(report[8]),
-        "r2_trigger": normalize_trigger(report[9]),
-        "accel_x": accel_x,
+        "r2_trigger": normalize_trigger(report[9])
+        }
+
+    if len(report) < 64:
+        return out
+
+    # parse 16-bit signed little-endian values for acceleration and rotation
+    gyro_x = int.from_bytes(report[13:15], byteorder='little', signed=True) / 16.4# in g's
+    gyro_y = int.from_bytes(report[15:17], byteorder='little', signed=True) / 16.4# in g's
+    gyro_z = int.from_bytes(report[17:19], byteorder='little', signed=True) / 16.4# in g's
+    accel_x = int.from_bytes(report[19:21], byteorder='little', signed=True) / 8192.0  # in deg/s
+    accel_y = int.from_bytes(report[21:23], byteorder='little', signed=True) / 8192.0  # in deg/s
+    accel_z = int.from_bytes(report[23:25], byteorder='little', signed=True) / 8192.0  # in deg/s
+
+    # get touchpad finger position data
+    touchpad_finger1_event = report[35] & 0x80 == 0  # touch event start (finger 1 down)
+    touchpad_finger1_id = report[35] & 0x7F  # unique identifier for the first finger touch event
+    touchpad_finger1_x = report[36] | ((report[37] & 0x0F) << 8)  # x position of finger 1 touch event
+    #fixed from     # https://github.com/chrippa/ds4drv/blob/master/ds4drv/device.py
+    touchpad_finger1_y = (report[38] << 4) | ((report[37] & 0xf0) >> 4)  # y position of finger 1 touch event
+
+    out.update({"accel_x": accel_x,
         "accel_y": accel_y,
         "accel_z": accel_z,
         "gyro_x": gyro_x,
@@ -110,7 +130,9 @@ def parse_ps4_report(report):
         "touchpad_finger1_id": touchpad_finger1_id,
         "touchpad_finger1_x": touchpad_finger1_x,
         "touchpad_finger1_y": touchpad_finger1_y,
-    }
+    })
+
+    return out
 
 
 
