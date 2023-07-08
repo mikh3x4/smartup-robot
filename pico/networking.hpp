@@ -67,6 +67,10 @@ public:
         this->active_command->telemetry_port = 8851;
 
         init_udp_receiver();
+
+        ip_addr_t ip;
+        ipaddr_aton("192.168.5.61", &ip);
+        netif_set_ipaddr(netif_list, &ip);
     }
 
     void send_udp() {
