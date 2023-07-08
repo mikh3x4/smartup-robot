@@ -38,10 +38,10 @@ Networking main_data;
 
 RBGLed rgb_led;
 
-MotorHardware motor_1;
+// MotorHardware motor_1;
 MotorHardware motor_2;
 MotorHardware motor_3;
-// MotorHardware motor_4;
+MotorHardware motor_4;
 
 ServosHardware servos;
 
@@ -69,12 +69,33 @@ int main() {
 
     adc.init();
 
-    motor_1.init(MOTOR_1A, MOTOR_1B, ENCODER_1A, ENCODER_1B);
+    //motor_1.init(MOTOR_1A, MOTOR_1B, ENCODER_1A, ENCODER_1B);
     motor_2.init(MOTOR_2A, MOTOR_2B, ENCODER_2A, ENCODER_2B);
     motor_3.init(MOTOR_3A, MOTOR_3B, ENCODER_3A, ENCODER_3B);
-    // motor_4.init(MOTOR_4A, MOTOR_4B, ENCODER_4A, ENCODER_4B);
+    motor_4.init(MOTOR_4A, MOTOR_4B, ENCODER_4A, ENCODER_4B);
+    enable_PWM();
 
-    // servos.init();
+
+    servos.init();
+
+    // uint8_t counter=0;
+    // while(1)
+    // {
+    //     for(int i=0;i<4;i++)
+    //     {
+    //         servos.set_power(i,true);
+    //         if(i<3)
+    //             servos.set_angle(i,1000+3*counter);
+    //         else
+    //             servos.set_angle(i,2000-3*counter);
+    //     }
+    //     int8_t tmp=counter;
+    //     motor_3.drive_power(tmp*7);
+    //     motor_4.drive_power(-tmp*7);
+    //     // rgb_led.set_color(counter<<7,counter<<9,0xFFFF-(counter<<7));
+    //     sleep_ms(20);
+    //     counter++;
+    // }
 
     // multicore_launch_core1(core1_entry);
 
@@ -86,12 +107,12 @@ int main() {
             main_data.active_command->estop();
         }
 
-        main_data.telemetry.v_bat = adc.get_vbat();
-        main_data.telemetry.temp = adc.get_core_temp();
+    //     main_data.telemetry.v_bat = adc.get_vbat();
+    //     main_data.telemetry.temp = adc.get_core_temp();
 
-        main_data.telemetry.encoders_position[0] = motor_1.encoder.get_count();
-        main_data.telemetry.encoders_position[1] = motor_2.encoder.get_count();
-        main_data.telemetry.encoders_position[2] = motor_3.encoder.get_count();
+    //     main_data.telemetry.encoders_position[0] = motor_1.encoder.get_count();
+    //     main_data.telemetry.encoders_position[1] = motor_2.encoder.get_count();
+    //     main_data.telemetry.encoders_position[2] = motor_3.encoder.get_count();
 
         main_data.telemetry.debug_print("test print\n");
         main_data.telemetry.debug_print("hello %f\n", adc.get_vbat());
@@ -107,8 +128,8 @@ int main() {
         main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 9");
         main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 0");
 
-        motor_1.exec_command(main_data.active_command->motors[0]);
-        motor_2.exec_command(main_data.active_command->motors[1]);
+        motor_2.exec_command(main_data.active_command->motors[0]);
+        motor_3.exec_command(main_data.active_command->motors[1]);
 
         //random test copy
         main_data.telemetry.encoders_position[3] = main_data.active_command->servos[0].angle;
@@ -116,7 +137,6 @@ int main() {
         main_data.send_udp();
 
         sleep_ms(10);
-
         rgb_led.set_color(main_data.active_command->led.red,
                           main_data.active_command->led.green,
                           main_data.active_command->led.blue,

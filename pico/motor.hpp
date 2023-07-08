@@ -22,6 +22,7 @@
 //     float ki = 0.0;
 //     float kd = 0.0;
 // } Motor;
+const uint16_t PWM_top=1000-1;
 
 class MotorHardware{
 
@@ -46,12 +47,17 @@ class MotorHardware{
 
     ASSERTM(slice_num == other_slice_num, "One motor's pwm pins need to be on the same pwm slice!");
 
-    pwm_set_wrap(slice_num, 0xFF);
+    pwm_set_wrap(slice_num, PWM_top);
+    //no prescaler we run at full 125Mhz
+    pwm_set_clkdiv_int_frac(slice_num,1,0);
+    
+    pwm_set_both_levels(slice_num,0,0);
+    
+    //we need inverted PWM to keep 0 as bottom MOS on
+    pwm_set_output_polarity(slice_num,false,false);
 
-    pwm_set_gpio_level(pin_a, 0);
-    pwm_set_gpio_level(pin_b, 0);
-
-    pwm_set_enabled(slice_num, true);
+    //commented by design. we need to enable them in sync at once.
+    //pwm_set_enabled(slice_num, true);
     return true;
   }
 
@@ -73,22 +79,28 @@ class MotorHardware{
   }
 
     void drive_power(int power){
-        ASSERT(power < 256);
-        ASSERT(power > -256);
+        ASSERT(power < PWM_top);
+        ASSERT(power > -PWM_top);
 
-        int current_pin = pin_b;
-        int other_pin = pin_a;
-
+        uint16_t power_left,power_right;
+        constexpr uint16_t max_power=PWM_top*0.95;
+        //we also need to clip PWM to 95% to give chance to charge pump to do it's work
+    
         if(power < 0){
-            current_pin = pin_a;
-            other_pin = pin_b;
-            power = -power;
+          if((-power)>max_power)
+            power_left=max_power;
+          else
+            power_left=-power;
+          power_right=0;
+        }else{
+          power_left=0;
+          if(power>max_power)
+            power_right=max_power;
+          else
+            power_right=power;
         }
-
-        printf("pin %d, \t power %d\n", other_pin, 0);
-        printf("pin %d, \t power %d\n", current_pin, power);
-        // pwm_set_gpio_level(other_pin, 0);
-        // pwm_set_gpio_level(current_pin, power);
+        //we need to set both channels at once
+        pwm_set_both_levels(slice_num,power_left,power_right);
     }
 
     // TODO Implement more of them
@@ -101,3 +113,13 @@ class MotorHardware{
 
 };
 
+static void inline enable_PWM()
+{
+    //set PWMs 90 degrees out of phase for lower noise
+    pwm_set_counter(0,0*PWM_top/4);
+    pwm_set_counter(1,1*PWM_top/4);
+    pwm_set_counter(2,2*PWM_top/4);
+    pwm_set_counter(5,3*PWM_top/4);
+    //enable all channels at once
+    pwm_set_mask_enabled(0b100111);
+}

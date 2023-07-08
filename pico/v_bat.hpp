@@ -8,7 +8,7 @@
 
 class ADC{
 
-    const float conversion_factor = 3.3f / (1 << 12);
+    const float conversion_factor = 3*3.3f / (1 << 12);
 public:
     bool init(){
         adc_init();
