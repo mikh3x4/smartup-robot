@@ -8,12 +8,15 @@ class Gamepad():
         vendor_id= 1356
         product_id= 2508
 
-        while 1:
+        looking = True
+        while looking:
             print("Looking for gamepad")
             for device in hid.enumerate():
                 if device["vendor_id"] == vendor_id and device["product_id"] == product_id:
+                    looking = False
                     break
-            time.sleep(0.2)
+            else:
+                time.sleep(0.2)
 
         self.g = hid.device()
         self.g.open(vendor_id, product_id)

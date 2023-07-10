@@ -12,7 +12,7 @@ def map(value, in_min, in_max, out_min, out_max):
 
 g = Gamepad()
 
-r = Robot('192.168.5.61', password="secret")
+r = Robot('192.168.5.50', password="secret")
 while 1:
     sleep(0.05)
 
@@ -26,8 +26,12 @@ while 1:
 
     # print(commands)
 
-    right = map(commands["ry"], -1, 1, -1023, 1023)
-    left = map(commands["ly"], -1, 1, -1023, 1023)
+    if commands["r1"]:
+        right = map(commands["ry"], -1, 1, -1023, 1023)
+        left = map(commands["ly"], -1, 1, -1023, 1023)
+    else:
+        right = 0 
+        left = 0
 
     print(left, right)
 
