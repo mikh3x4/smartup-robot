@@ -22,7 +22,7 @@
 //     float ki = 0.0;
 //     float kd = 0.0;
 // } Motor;
-const uint16_t PWM_top=1000-1;
+const uint16_t PWM_top=1024;
 
 template <typename EncoderType>
 class MotorHardware{

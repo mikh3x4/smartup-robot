@@ -1,6 +1,6 @@
 
 from robot import Robot
-from ps4 import PS4Controller as Gamepad
+from ps4 import Gamepad
 
 from time import sleep
 
@@ -12,15 +12,22 @@ def map(value, in_min, in_max, out_min, out_max):
 
 g = Gamepad()
 
-r = Robot('192.168.5.60', password="secret")
-
+r = Robot('192.168.5.61', password="secret")
 while 1:
     sleep(0.05)
+
     commands = g.get()
+
+    if commands is None:
+        r.estop()
+        continue
+    
+    r.start()
+
     # print(commands)
 
-    right = map(commands["ry"], -1, 1, -1000, 1000)
-    left = map(commands["ly"], -1, 1, -1000, 1000)
+    right = map(commands["ry"], -1, 1, -1023, 1023)
+    left = map(commands["ly"], -1, 1, -1023, 1023)
 
     print(left, right)
 

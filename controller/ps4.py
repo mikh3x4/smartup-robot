@@ -3,31 +3,26 @@
 import hid
 import time
 
-
-class PS4Controller():
-
+class Gamepad():
     def __init__(self):
         vendor_id= 1356
         product_id= 2508
+
+        while 1:
+            print("Looking for gamepad")
+            for device in hid.enumerate():
+                if device["vendor_id"] == vendor_id and device["product_id"] == product_id:
+                    break
+            time.sleep(0.2)
+
         self.g = hid.device()
         self.g.open(vendor_id, product_id)
         self.g.set_nonblocking(True)
 
+        print("Found gamepad")
+
         self.report = None
         self.last_update = time.monotonic()
-
-    def update(self):
-        report = self.g.read(64)
-        if report:
-            self.report = report
-            print(report)
-
-    def get_most_recent(self):
-        while 1:
-            report = self.g.read(64)
-            if report:
-                break
-
     
     def get(self):
         while 1:

@@ -59,6 +59,12 @@ public:
     }
 
     void init(){
+        ip_addr_t ip;
+        ipaddr_aton("192.168.5.50", &ip);
+        netif_set_ipaddr(netif_list, &ip);
+
+        printf("IP address: %s\n", ip4addr_ntoa(netif_ip4_addr(netif_list)));
+        
         this->udp_pcb = udp_new();
         this->active_command = &this->command_1;
         this->scratch_command = &this->command_2;
@@ -67,10 +73,6 @@ public:
         this->active_command->telemetry_port = 8851;
 
         init_udp_receiver();
-
-        ip_addr_t ip;
-        ipaddr_aton("192.168.5.61", &ip);
-        netif_set_ipaddr(netif_list, &ip);
     }
 
     void send_udp() {

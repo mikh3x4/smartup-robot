@@ -24,6 +24,7 @@ class UDP:
         self.incoming = None
 
         self.thread_running = False
+        self.thread_paused = False
 
     def send_message(self, message):
         self.sock.sendto(json.dumps(message).encode(), self.outgoing_addres)
@@ -50,6 +51,9 @@ class UDP:
         # try:
         while self.thread_running:
             time.sleep(0.05)
+            if self.thread_paused:
+                continue
+
             self.send_message(self.outgoing)
             incoming = self.get_most_recent()
             if incoming != None:
@@ -85,6 +89,12 @@ class Robot:
     def __del__(self):
         self.udp.thread_running = False
 
+    def estop(self):
+        self.udp.thread_paused = True
+
+    def start(self):
+        self.udp.thread_paused = False
+
     def set_led(self, red, green, blue, blink=0):
         assert 0 <= red <= 255
         assert 0 <= green <= 255
@@ -92,7 +102,6 @@ class Robot:
         assert blink >= 0
         self.msg["led"] = [red,green,blue,blink]
         self.udp.set(self.msg)
-
 
     def set_motor_pid(self, index, kp, ki, kd):
         assert 0 <= index <= 3
