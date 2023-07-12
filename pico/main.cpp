@@ -45,7 +45,6 @@ MotorHardware motor_4;
 
 ServosHardware servos;
 
-ADC adc;
 
 void init(){
     stdio_init_all();
@@ -67,8 +66,8 @@ int main() {
 
     rgb_led.init(LED_RED, LED_GREEN, LED_BLUE);
 
-    adc.init();
-
+    ADC.init();
+    //ADC needs to be initialised before motors
     //motor_1.init(MOTOR_1A, MOTOR_1B, ENCODER_1A, ENCODER_1B);
     motor_2.init(MOTOR_2A, MOTOR_2B, ENCODER_2A, ENCODER_2B);
     motor_3.init(MOTOR_3A, MOTOR_3B, ENCODER_3A, ENCODER_3B);
@@ -78,24 +77,26 @@ int main() {
 
     servos.init();
 
-    // uint8_t counter=0;
-    // while(1)
-    // {
-    //     for(int i=0;i<4;i++)
-    //     {
-    //         servos.set_power(i,true);
-    //         if(i<3)
-    //             servos.set_angle(i,1000+3*counter);
-    //         else
-    //             servos.set_angle(i,2000-3*counter);
-    //     }
-    //     int8_t tmp=counter;
-    //     motor_3.drive_power(tmp*7);
-    //     motor_4.drive_power(-tmp*7);
-    //     // rgb_led.set_color(counter<<7,counter<<9,0xFFFF-(counter<<7));
-    //     sleep_ms(20);
-    //     counter++;
-    // }
+     uint8_t counter=0;
+    while(1)
+    {
+        for(int i=0;i<4;i++)
+        {
+            servos.set_power(i,true);
+            if(i<3)
+                servos.set_angle(i,1000+3*counter);
+            else
+                servos.set_angle(i,2000-3*counter);
+        }
+        int8_t tmp=counter;
+        motor_3.drive_power(tmp*7);
+        motor_4.drive_power(-tmp*7);
+        printf("encoder state %d\n",motor_3.encoder.get_count());
+        printf("batt voltage: %f\n",ADC.get_vbat());
+        // rgb_led.set_color(counter<<7,counter<<9,0xFFFF-(counter<<7));
+        sleep_ms(20);
+        counter++;
+    }
 
     // multicore_launch_core1(core1_entry);
 
@@ -107,15 +108,15 @@ int main() {
             main_data.active_command->estop();
         }
 
-    //     main_data.telemetry.v_bat = adc.get_vbat();
-    //     main_data.telemetry.temp = adc.get_core_temp();
+    //     main_data.telemetry.v_bat = ADC.get_vbat();
+    //     main_data.telemetry.temp = ADC.get_core_temp();
 
     //     main_data.telemetry.encoders_position[0] = motor_1.encoder.get_count();
     //     main_data.telemetry.encoders_position[1] = motor_2.encoder.get_count();
     //     main_data.telemetry.encoders_position[2] = motor_3.encoder.get_count();
 
         main_data.telemetry.debug_print("test print\n");
-        main_data.telemetry.debug_print("hello %f\n", adc.get_vbat());
+        main_data.telemetry.debug_print("hello %f\n", ADC.get_vbat());
         main_data.telemetry.debug_print("led red%d\n", main_data.active_command->led.red);
         main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 1");
         main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 2");

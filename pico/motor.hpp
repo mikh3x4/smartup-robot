@@ -8,6 +8,7 @@
 
 #include <encoder.hpp>
 #include <command.hpp>
+#include <v_bat.hpp>
 
 // enum MOTOR_MODE {OFF, POWER, SPEED, DISTANCE};
 //
@@ -22,7 +23,10 @@
 //     float ki = 0.0;
 //     float kd = 0.0;
 // } Motor;
-const uint16_t PWM_top=1000-1;
+//1024 max PWM from python + 5% for charge pump
+const uint16_t PWM_top=1075-1;
+const float VBAT_MIN=6.2f;
+const float VBAT_MAX=8.6f;
 
 class MotorHardware{
 
@@ -81,6 +85,14 @@ class MotorHardware{
     void drive_power(int power){
         ASSERT(power < PWM_top);
         ASSERT(power > -PWM_top);
+        //check if vbat is out of range
+        if(ADC.cached_vbat<VBAT_MIN)
+          return;
+        //check if vbat is out of range
+        if(ADC.cached_vbat>VBAT_MAX)
+          return;
+        //scale power to 6V
+        power=power*6.0f/ADC.cached_vbat;
 
         uint16_t power_left,power_right;
         constexpr uint16_t max_power=PWM_top*0.95;
