@@ -89,12 +89,13 @@ int main() {
                 servos.set_angle(i,2000-3*counter);
         }
         int8_t tmp=counter;
+        motor_2.drive_power(-tmp*7);
         motor_3.drive_power(tmp*7);
         motor_4.drive_power(-tmp*7);
         printf("encoder state %d\n",motor_3.encoder.get_count());
-        printf("batt voltage: %f\n",ADC.get_vbat());
+        printf("batt voltage: %f\n",ADC.get_smoothed_vbat());
         // rgb_led.set_color(counter<<7,counter<<9,0xFFFF-(counter<<7));
-        sleep_ms(20);
+        sleep_ms(1);
         counter++;
     }
 

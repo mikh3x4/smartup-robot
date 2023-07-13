@@ -86,13 +86,13 @@ class MotorHardware{
         ASSERT(power < PWM_top);
         ASSERT(power > -PWM_top);
         //check if vbat is out of range
-        if(ADC.cached_vbat<VBAT_MIN)
+        if(ADC.smoothed_state<VBAT_MIN)
           return;
         //check if vbat is out of range
-        if(ADC.cached_vbat>VBAT_MAX)
+        if(ADC.smoothed_state>VBAT_MAX)
           return;
         //scale power to 6V
-        power=power*6.0f/ADC.cached_vbat;
+        power=power*6.0f/ADC.smoothed_state;
 
         uint16_t power_left,power_right;
         constexpr uint16_t max_power=PWM_top*0.95;
