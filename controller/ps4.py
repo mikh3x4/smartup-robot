@@ -28,6 +28,8 @@ class Gamepad():
         self.last_update = time.monotonic()
     
     def get(self):
+        """
+        """
         while 1:
             report = self.g.read(64)
             if not report:
@@ -37,10 +39,12 @@ class Gamepad():
                 self.last_update = time.monotonic()
 
         if self.report is None:
-            return None
+            raise ConnectionError
+            # return None
 
-        if self.last_update + 0.5 < time.monotonic():
-            return None
+        if self.last_update + 0.3 < time.monotonic():
+            raise ConnectionError
+            # return None
 
         return parse_ps4_report(self.report)
 
