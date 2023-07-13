@@ -7,7 +7,14 @@ from time import sleep
 
 def map(value, in_min, in_max, out_min, out_max):
     # Perform linear interpolation
-    return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+    output = (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+
+    if output > out_max:
+        return out_max
+    if output < out_min:
+        return out_min
+
+    return output
 
 
 g = Gamepad()
@@ -27,20 +34,24 @@ while 1:
     # print(commands)
 
     if commands["r1"]:
-        right = map(commands["ry"], -1, 1, -1023, 1023)
-        left = map(commands["ly"], -1, 1, -1023, 1023)
+        front = commands["ry"]
+        side = commands["rx"]
     else:
-        right = 0 
-        left = 0
+        front = 0
+        side = 0
+
+    right = map(-front + side, -1, 1, -1023, 1023)
+    left = map(-front - side, -1, 1, -1023, 1023)
 
     print(left, right)
 
     r.set_motor_power(1, right)
-    r.set_motor_power(2, -left)
+    r.set_motor_power(2, left)
 
     r.set_led( map(commands["ry"], -1, 1, 0, 255), map(commands["ly"], -1, 1, 0, 255), 0)
 
     try:
+        print(r.udp.get())
         print(r.udp.get()["debug"])
     except:
         pass
