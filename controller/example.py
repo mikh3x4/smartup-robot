@@ -7,7 +7,9 @@ from time import sleep
 
 g = Gamepad()
 
-r = Robot('192.168.5.50', password="secret")
+# r = Robot('192.168.5.50', password="secret")
+r = Robot('192.168.1.10', password="secret")
+
 while 1:
     sleep(0.05)
 
