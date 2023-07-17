@@ -23,11 +23,13 @@
 //     float ki = 0.0;
 //     float kd = 0.0;
 // } Motor;
+//
 //1024 max PWM from python + 5% for charge pump
 const uint16_t PWM_top=1075-1;
 const float VBAT_MIN=6.2f;
 const float VBAT_MAX=8.6f;
 
+template <typename EncoderType>
 class MotorHardware{
 
   int pin_a;
@@ -36,7 +38,7 @@ class MotorHardware{
   uint slice_num;
 
   public:
-  Encoder encoder; //will template on this for 4th encoder
+  EncoderType encoder; //will template on this for 4th encoder
 
   bool init(int motor_pin_a, int motor_pin_b, int encoder_pin_a, int encoder_pin_b){
     encoder.init(encoder_pin_a, encoder_pin_b);
@@ -69,11 +71,11 @@ class MotorHardware{
     void exec_command(Motor command){
     switch (command.mode){
       case OFF:
-        printf("motor off \n");
+        DEBUG_PRINT("motor off \n");
         drive_power(0);
         break;
       case POWER:
-        printf("motor %d\n", command.power);
+        DEBUG_PRINT("motor %d\n", command.power);
         drive_power(command.power);
         break;
       default:

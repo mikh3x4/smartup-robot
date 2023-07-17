@@ -59,6 +59,12 @@ public:
     }
 
     void init(){
+        // ip_addr_t ip;
+        // ipaddr_aton("192.168.5.50", &ip);
+        // netif_set_ipaddr(netif_list, &ip);
+
+        printf("IP address: %s\n", ip4addr_ntoa(netif_ip4_addr(netif_list)));
+        
         this->udp_pcb = udp_new();
         this->active_command = &this->command_1;
         this->scratch_command = &this->command_2;
@@ -111,3 +117,7 @@ void udp_recv_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
         main_data_ptr->scratch_command = temp;
     }
 }
+
+extern Networking main_data;
+#define DEBUG_PRINT main_data.telemetry.debug_print
+

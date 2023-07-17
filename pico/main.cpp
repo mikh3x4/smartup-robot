@@ -27,21 +27,14 @@
 #include "pins.h"
 
 
-
-void core1_entry() {
-        printf("hello from core 1\n");
-}
-
-
-
 Networking main_data;
 
 RBGLed rgb_led;
 
-// MotorHardware motor_1;
-MotorHardware motor_2;
-MotorHardware motor_3;
-MotorHardware motor_4;
+MotorHardware<InteruptEncoder> motor_1; //Waiting for interupt encoders, probably can wait
+MotorHardware<Encoder> motor_2;
+MotorHardware<Encoder> motor_3;
+MotorHardware<Encoder> motor_4;
 
 ServosHardware servos;
 
@@ -57,6 +50,11 @@ void init(){
     printf("Connected.\n");
 }
 
+void core1_entry() {
+    printf("hello from core 1\n");
+    motor_1.encoder.init_core_sepecific();
+    while(1);
+}
 
 
 int main() {
@@ -68,81 +66,47 @@ int main() {
 
     ADC.init();
     //ADC needs to be initialised before motors
-    //motor_1.init(MOTOR_1A, MOTOR_1B, ENCODER_1A, ENCODER_1B);
+    motor_1.init(MOTOR_1A, MOTOR_1B, ENCODER_1A, ENCODER_1B);
     motor_2.init(MOTOR_2A, MOTOR_2B, ENCODER_2A, ENCODER_2B);
     motor_3.init(MOTOR_3A, MOTOR_3B, ENCODER_3A, ENCODER_3B);
     motor_4.init(MOTOR_4A, MOTOR_4B, ENCODER_4A, ENCODER_4B);
     enable_PWM();
 
-
     servos.init();
 
-     uint8_t counter=0;
-    while(1)
-    {
-        for(int i=0;i<4;i++)
-        {
-            servos.set_power(i,true);
-            if(i<3)
-                servos.set_angle(i,1000+3*counter);
-            else
-                servos.set_angle(i,2000-3*counter);
-        }
-        int8_t tmp=counter;
-        motor_2.drive_power(-tmp*7);
-        motor_3.drive_power(tmp*7);
-        motor_4.drive_power(-tmp*7);
-        printf("encoder state %d\n",motor_3.encoder.get_count());
-        printf("batt voltage: %f\n",ADC.get_smoothed_vbat());
-        // rgb_led.set_color(counter<<7,counter<<9,0xFFFF-(counter<<7));
-        sleep_ms(1);
-        counter++;
-    }
-
-    // multicore_launch_core1(core1_entry);
+    multicore_launch_core1(core1_entry);
 
     while (1) {
         main_data.telemetry.clear_debug();
         if( absolute_time_diff_us(main_data.active_command->recv_time, get_absolute_time()) > 500000) {
             printf("Stale command! ESTOP\n");
-            main_data.telemetry.debug_print("ESTOP\n");
+            DEBUG_PRINT("Stale Cmd! ESTOP\n");
             main_data.active_command->estop();
         }
 
-    //     main_data.telemetry.v_bat = ADC.get_vbat();
-    //     main_data.telemetry.temp = ADC.get_core_temp();
+        main_data.telemetry.v_bat = ADC.get_vbat();
+        // main_data.telemetry.temp = adc.get_core_temp();
 
-    //     main_data.telemetry.encoders_position[0] = motor_1.encoder.get_count();
-    //     main_data.telemetry.encoders_position[1] = motor_2.encoder.get_count();
-    //     main_data.telemetry.encoders_position[2] = motor_3.encoder.get_count();
+        main_data.telemetry.encoders_position[0] = motor_1.encoder.get_count();
+        main_data.telemetry.encoders_position[1] = motor_2.encoder.get_count();
+        main_data.telemetry.encoders_position[2] = motor_3.encoder.get_count();
+        main_data.telemetry.encoders_position[3] = motor_4.encoder.get_count();
 
-        main_data.telemetry.debug_print("test print\n");
-        main_data.telemetry.debug_print("hello %f\n", ADC.get_vbat());
-        main_data.telemetry.debug_print("led red%d\n", main_data.active_command->led.red);
-        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 1");
-        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 2");
-        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 3");
-        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 4");
-        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 5");
-        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 6");
-        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 7");
-        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 8");
-        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 9");
-        main_data.telemetry.debug_print("THIS IS BIG LONG PRINT 0");
+        // DEBUG_PRINT("test print\n");
+        // DEBUG_PRINT("hello %f\n", adc.get_vbat());
 
-        motor_2.exec_command(main_data.active_command->motors[0]);
-        motor_3.exec_command(main_data.active_command->motors[1]);
+        motor_1.exec_command(main_data.active_command->motors[0]);
+        motor_2.exec_command(main_data.active_command->motors[1]);
+        motor_3.exec_command(main_data.active_command->motors[2]);
+        motor_4.exec_command(main_data.active_command->motors[3]);
 
-        //random test copy
-        main_data.telemetry.encoders_position[3] = main_data.active_command->servos[0].angle;
-
-        main_data.send_udp();
-
-        sleep_ms(10);
         rgb_led.set_color(main_data.active_command->led.red,
                           main_data.active_command->led.green,
                           main_data.active_command->led.blue,
                           main_data.active_command->led.blink);
+
+        main_data.send_udp();
+        sleep_ms(10);
 
     }
 }

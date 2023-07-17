@@ -24,6 +24,7 @@ class UDP:
         self.incoming = None
 
         self.thread_running = False
+        self.thread_paused = False
 
     def send_message(self, message):
         self.sock.sendto(json.dumps(message).encode(), self.outgoing_addres)
@@ -50,6 +51,9 @@ class UDP:
         # try:
         while self.thread_running:
             time.sleep(0.05)
+            if self.thread_paused:
+                continue
+
             self.send_message(self.outgoing)
             incoming = self.get_most_recent()
             if incoming != None:
@@ -85,14 +89,35 @@ class Robot:
     def __del__(self):
         self.udp.thread_running = False
 
+    def estop(self):
+        """
+        Emergency Stop. 
+        Cuts power to all motors and servos. Puts robot in safe state
+        """
+        self.udp.thread_paused = True
+
+    def start(self):
+        """
+        Restarts the motors and servos after and estop
+        """
+        self.udp.thread_paused = False
+
     def set_led(self, red, green, blue, blink=0):
+        """
+        Sets a new LED color.
+        arg:
+            - red: int in range 0 - 255 
+            - green: int in range 0 - 255
+            - blue: int in range 0 - 255
+            - blink: period of blinking in milliseconds. If zero no blinking
+        """
+
         assert 0 <= red <= 255
         assert 0 <= green <= 255
         assert 0 <= blue <= 255
         assert blink >= 0
         self.msg["led"] = [red,green,blue,blink]
         self.udp.set(self.msg)
-
 
     def set_motor_pid(self, index, kp, ki, kd):
         assert 0 <= index <= 3
@@ -110,6 +135,19 @@ class Robot:
     def get_settings_version(self):
         return self.udp.get()["set_ver"]
 
+    def get(self):
+        """
+        Returns the state of the robots sensors. 
+        returns:
+            - None if no contact in TODO milliseconds
+                or
+            - dictionary of sensor readings.
+            Example
+        """
+        output = self.udp.get()
+        print(output)
+
+
     def set_motor_speed_distance(self, index, speed, encoder_ticks):
         assert 0 <= index <= 3
         assert 0 <= speed <= 255
@@ -118,23 +156,49 @@ class Robot:
         self.udp.set(self.msg)
 
     def set_motor_speed(self, index, speed):
+        """
+        Uses PID to drive motor at fixed speed
+        args:
+            - index: int in range 0-3. Which motor to drive?
+            - speed: float in range TODO. What speed to drive it with?
+                     Negative value go backaward
+        """
         assert 0 <= index <= 3
         assert -255 <= power <= 255
         self.msg["m"][index] = ["spd", speed]
         self.udp.set(self.msg)
 
     def set_motor_power(self, index, power):
+        """
+        Drives a motor with a fixed power
+        args:
+            - index: int in range 0-3. Which motor to drive?
+            - power: int in range 0 - 270. What power to drive it with?
+                     Negative value go backaward
+        """
         assert 0 <= index <= 3
-        assert -255 <= power <= 255
+        # assert -255 <= power <= 255
         self.msg["m"][index] = ["pwr", power]
         self.udp.set(self.msg)
 
     def disable_motor(self, index):
+        """
+        Cuts power to motor
+        args:
+            - index: int in range 0-3. Which motor to stop?
+        """
         assert 0 <= index <= 3
         self.msg["m"][index] = ["off"]
         self.udp.set(self.msg)
 
     def set_servo(self, index, angle):
+        """
+        Tells a servo to go to a given angle
+        args:
+            - index: int in range 0-3. Which servo to move?
+            - angle: int in range 0 - 270. Want angle do we want it at?
+        """
+
         assert 0 <= index <= 3
         assert 0 <= angle <= 180
         self.msg["s"][index] = angle
@@ -145,6 +209,16 @@ class Robot:
         self.msg["s"][index] = None
         self.udp.set(self.msg)
 
+def map(value, in_min, in_max, out_min, out_max):
+    # Perform linear interpolation
+    output = (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+
+    if output > out_max:
+        return out_max
+    if output < out_min:
+        return out_min
+
+    return output
 
 if __name__ == "__main__":
     import time
