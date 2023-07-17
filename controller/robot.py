@@ -119,6 +119,8 @@ class Robot:
         self.udp.set(self.msg)
 
     def set_motor_pid(self, index, kp, ki, kd):
+        raise NotImplementedError
+        index -= 1
         assert 0 <= index <= 3
 
         setting = self.get_settings_version()
@@ -132,22 +134,28 @@ class Robot:
         self.msg.pop("PID")
 
     def get_settings_version(self):
+        raise NotImplementedError
         return self.udp.get()["set_ver"]
 
     def get(self):
         """
-        Returns the state of the robots sensors. 
+        Returns the state of the robots sensors.
         returns:
-            - None if no contact in TODO milliseconds
-                or
             - dictionary of sensor readings.
             Example
-        """
-        output = self.udp.get()
-        print(output)
+             {"motor_position": [0,0, 100, -100],
+               "battery_voltage": 9.43}
 
+        """
+        message = self.udp.get()
+
+        out = {"motor_position": message['pos'],
+               "battery_voltage": message["vbat"]}
+        print(out)
 
     def set_motor_speed_distance(self, index, speed, encoder_ticks):
+        raise NotImplementedError
+        index -= 1
         assert 0 <= index <= 3
         assert 0 <= speed <= 255
         assert type(encoder_ticks) is int
@@ -162,6 +170,8 @@ class Robot:
             - speed: float in range TODO. What speed to drive it with?
                      Negative value go backaward
         """
+        raise NotImplementedError
+        index -=1
         assert 0 <= index <= 3
         assert -255 <= power <= 255
         self.msg["m"][index] = ["spd", speed]
@@ -171,10 +181,10 @@ class Robot:
         """
         Drives a motor with a fixed power
         args:
-            - index: int in range 0-3. Which motor to drive?
-            - power: int in range 0 - 270. What power to drive it with?
-                     Negative value go backaward
+            - index: int in range 1-4. Which motor to drive?
+            - power: int in range -1024 to 1024. What power to drive it with?
         """
+        index -= 1
         assert 0 <= index <= 3
         # assert -255 <= power <= 255
         self.msg["m"][index] = ["pwr", power]
@@ -186,28 +196,31 @@ class Robot:
         args:
             - index: int in range 0-3. Which motor to stop?
         """
+        index -= 1
         assert 0 <= index <= 3
         self.msg["m"][index] = ["off"]
         self.udp.set(self.msg)
 
-    def set_servo(self, index, angle):
+    def set_servo(self, index, width):
         """
         Tells a servo to go to a given pulse width
         args:
-            - index: int in range 0-3. Which servo to move?
-            - angle: int in range 0 - 270. Want angle do we want it at?
+            - index: int in range 1-4. Which servo to move?
+            - angle: int in range 1000 - 2000. Want angle do we want it at?
         """
 
+        index -= 1
         assert 0 <= index <= 3
-        assert 0 <= angle <= 180
-        self.msg["s"][index] = angle
+        assert 500 <= width <= 2500
+        self.msg["s"][index] = width
         self.udp.set(self.msg)
 
     def disable_servo(self, index):
+        raise NotImplementedError
+        index -= 1
         assert 0 <= index <= 3
         self.msg["s"][index] = None
         self.udp.set(self.msg)
-
 
 def map(value, in_min, in_max, out_min, out_max):
     # Perform linear interpolation
@@ -224,8 +237,7 @@ if __name__ == "__main__":
     import time
     a = Robot('192.168.5.60')
 
-    a.set_servo(0,45)
-
+    # a.set_servo(0,45)
 
     time.sleep(1)
     print("got", a.get())
