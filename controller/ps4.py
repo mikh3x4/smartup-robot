@@ -5,16 +5,33 @@ import time
 
 class Gamepad():
     def __init__(self):
-        vendor_id= 1356
-        product_id= 2508
+        # vendor_id= 1356
+        # product_id= 2508
+
+        # vendor_id= 2064
+        # product_id= 1
+
+        self.gamepads = {
+                (2064, 1): parse_esperanza_report,
+                (1356, 2508): parse_ps4_report,
+                }
+
+        self.parse = None
 
         looking = True
         while looking:
             print("Looking for gamepad")
             for device in hid.enumerate():
-                if device["vendor_id"] == vendor_id and device["product_id"] == product_id:
+                if((device["vendor_id"], device["product_id"]) in self.gamepads.keys()):
+                    self.parse = self.gamepads[ (device["vendor_id"], device["product_id"]) ] 
+                    vendor_id = device["vendor_id"]
+                    product_id = device["product_id"]
                     looking = False
                     break
+
+                # if device["vendor_id"] == vendor_id and device["product_id"] == product_id:
+                #     looking = False
+                #     break
             else:
                 time.sleep(0.2)
 
@@ -46,7 +63,7 @@ class Gamepad():
             raise ConnectionError
             # return None
 
-        return parse_ps4_report(self.report)
+        return self.parse(self.report)
 
 
     def send_commands(self):
@@ -139,3 +156,42 @@ def parse_ps4_report(report):
 
 
 
+def parse_esperanza_report(report):
+    # normalize a byte to -1 to 1 scale
+
+    def normalize_stick(byte):
+        return (byte - 127.5) / 127.5
+
+    # normalize a byte to 0 to 1 scale
+    def normalize_trigger(byte):
+        return byte / 255.0
+
+    # look at     # https://github.com/chrippa/ds4drv/blob/master/ds4drv/device.py
+
+    # dpad_states = ["up", "up_right", "right", "down_right", "down", "down_left", "left", "up_left", "none"]
+
+    out = {
+        # "dpad_up": dpad_states[report[5] & 0xF] == "up" or dpad_states[report[5] & 0xF] == "up_right" or dpad_states[report[5] & 0xF] == "up_left",
+        # "dpad_down": dpad_states[report[5] & 0xF] == "down" or dpad_states[report[5] & 0xF] == "down_right" or dpad_states[report[5] & 0xF] == "down_left",
+        # "dpad_left": dpad_states[report[5] & 0xF] == "left" or dpad_states[report[5] & 0xF] == "up_left" or dpad_states[report[5] & 0xF] == "down_left",
+        # "dpad_right": dpad_states[report[5] & 0xF] == "right" or dpad_states[report[5] & 0xF] == "up_right" or dpad_states[report[5] & 0xF] == "down_right",
+
+        "button_1": bool(report[5] & (31 ^ 15)),
+        "button_2": bool(report[5] & (47 ^ 15)),
+        "button_3": bool(report[5] & (79 ^ 15)),
+        "button_4": bool(report[5] & (143 ^ 15)),
+
+        "l1": bool(report[6] & 1),
+        "r1": bool(report[6] & 2),
+        "l2": bool(report[6] & 4),
+        "r2": bool(report[6] & 8),
+        "select": bool(report[6] & 16),
+        "start": bool(report[6] & 32),
+
+        "lx": normalize_stick(report[3]),
+        "ly": -normalize_stick(report[4]),
+        "rx": normalize_stick(report[1]),
+        "ry": -normalize_stick(report[2]),
+        }
+
+    return out
