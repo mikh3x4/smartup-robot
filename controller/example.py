@@ -1,20 +1,8 @@
 
-from robot import Robot
-from ps4 import Gamepad
+from robot import Robot, map
+from gamepad import Gamepad
 
 from time import sleep
-
-
-def map(value, in_min, in_max, out_min, out_max):
-    # Perform linear interpolation
-    output = (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-
-    if output > out_max:
-        return out_max
-    if output < out_min:
-        return out_min
-
-    return output
 
 
 g = Gamepad()

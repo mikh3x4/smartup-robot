@@ -209,6 +209,16 @@ class Robot:
         self.msg["s"][index] = None
         self.udp.set(self.msg)
 
+def map(value, in_min, in_max, out_min, out_max):
+    # Perform linear interpolation
+    output = (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+
+    if output > out_max:
+        return out_max
+    if output < out_min:
+        return out_min
+
+    return output
 
 if __name__ == "__main__":
     import time
