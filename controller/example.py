@@ -35,10 +35,10 @@ while 1:
 
     print(left, right)
 
-    r.set_motor_power(1, right)
-    r.set_motor_power(2, left)
+    r.set_motor_power(2, right)
+    r.set_motor_power(3, left)
 
-    r.set_led( map(commands["ry"], -1, 1, 0, 255), map(commands["ly"], -1, 1, 0, 255), 0)
+    r.set_led(255,0,0, 100)
 
     try:
         print(r.udp.get())
