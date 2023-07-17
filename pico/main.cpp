@@ -100,10 +100,11 @@ int main() {
         motor_3.exec_command(main_data.active_command->motors[2]);
         motor_4.exec_command(main_data.active_command->motors[3]);
 
-        servos.exec_command(0, main_data.active_command->servos[0]);
-        servos.exec_command(1, main_data.active_command->servos[1]);
-        servos.exec_command(2, main_data.active_command->servos[2]);
-        servos.exec_command(3, main_data.active_command->servos[3]);
+        // SWAPPED ORDER OF SERVOS TO MATCH BOARD
+        servos.exec_command(0, main_data.active_command->servos[3]);
+        servos.exec_command(1, main_data.active_command->servos[2]);
+        servos.exec_command(2, main_data.active_command->servos[1]);
+        servos.exec_command(3, main_data.active_command->servos[0]);
 
         rgb_led.set_color(main_data.active_command->led.red,
                           main_data.active_command->led.green,

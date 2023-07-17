@@ -120,19 +120,15 @@ class ServosHardware{
     }
 
     void exec_command(int servo_number, Servo command){
-        switch (command.on){
-          case false:
-            set_power(servo_number, false);
-            // set_pulse_width(servo_number, 0);
-            break;
-          case true:
+        if (command.on){
             set_power(servo_number, true);
             set_pulse_width(servo_number, command.pulse_width);
-            break;
-          default:
-            ASSERTM(false, "Not Implemented");
+            DEBUG_PRINT("servo %d\n", command.pulse_width);
+
+        }else{
+            set_power(servo_number, false);
+            // set_pulse_width(servo_number, 0);
         }
     }
-
 };
 

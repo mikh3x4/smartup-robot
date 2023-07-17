@@ -1,27 +1,24 @@
 
 from robot import Robot, map
 from gamepad import Gamepad
-
 from time import sleep
 
-
-g = Gamepad()
-
-# r = Robot('192.168.5.50', password="secret")
-r = Robot('192.168.1.10', password="secret")
+gamepad = Gamepad()
+# robot = Robot('192.168.1.10')
+robot = Robot('172.20.10.13')
 
 while 1:
     sleep(0.05)
 
-    commands = g.get()
-
-    if commands is None:
-        r.estop()
+    try:
+        commands = gamepad.get()
+    except ConnectionError:
+        robot.estop()
         continue
-    
-    r.start()
 
     # print(commands)
+
+    robot.start()
 
     if commands["r1"]:
         front = commands["ry"]
@@ -30,19 +27,22 @@ while 1:
         front = 0
         side = 0
 
+    if commands["button_1"]:
+        robot.set_servo(1, 1500)
+    else:
+        robot.set_servo(1, 1800)
+
     right = map(-front + side, -1, 1, -1023, 1023)
     left = map(-front - side, -1, 1, -1023, 1023)
 
     print(left, right)
 
-    r.set_motor_power(2, right)
-    r.set_motor_power(3, left)
+    robot.set_motor_power(2, right)
+    robot.set_motor_power(3, left)
 
-    r.set_led(255,0,0, 100)
+    robot.set_led(0,255,0, 0)
 
-    try:
-        print(r.udp.get())
-        print(r.udp.get()["debug"])
-    except:
-        pass
+    print(robot.get())
+    print(robot.debug())
+
 

@@ -46,6 +46,9 @@ class Gamepad():
     
     def get(self):
         """
+        Returns a dictionary of possible buttons on the gamepad
+        If the gamepad disconnects or 300ms have passed without an last_update
+        if raises a ConnectionError
         """
         while 1:
             report = self.g.read(64)

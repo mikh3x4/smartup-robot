@@ -5,6 +5,17 @@ import json
 import threading
 import time
 
+def map(value, in_min, in_max, out_min, out_max):
+    # Perform linear interpolation
+    output = (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+
+    if output > out_max:
+        return out_max
+    if output < out_min:
+        return out_min
+
+    return output
+
 class UDP:
     PORT = 8850
     MAX_SIZE = 1024
@@ -69,15 +80,13 @@ class UDP:
 
 
 class Robot:
-    def __init__(self, ip, password=None):
-        if password == None:
-            password = "secret"
+    def __init__(self, ip, password="secret"):
+
         self.udp = UDP(ip)
         self.msg = {"p": password,
                     "s": [None, None, None, None],
                     "m": [["off"], ["off"], ["off"], ["off"]],
                     "led": [0, 255, 0, 0]}
-
 
         self.com_tread = threading.Thread(target=self.udp.communicate, daemon=True)
         self.udp.thread_running = True
@@ -118,64 +127,6 @@ class Robot:
         self.msg["led"] = [red,green,blue,blink]
         self.udp.set(self.msg)
 
-    def set_motor_pid(self, index, kp, ki, kd):
-        raise NotImplementedError
-        index -= 1
-        assert 0 <= index <= 3
-
-        setting = self.get_settings_version()
-        self.msg["PID"] = [index, kp, ki, kd]
-        self.udp.set(self.msg)
-
-        # wait for new settings version number
-        while (self.get_settings_version() == setting):
-            pass
-
-        self.msg.pop("PID")
-
-    def get_settings_version(self):
-        raise NotImplementedError
-        return self.udp.get()["set_ver"]
-
-    def get(self):
-        """
-        Returns the state of the robots sensors.
-        returns:
-            - dictionary of sensor readings.
-            Example
-             {"motor_position": [0,0, 100, -100],
-               "battery_voltage": 9.43}
-
-        """
-        message = self.udp.get()
-
-        out = {"motor_position": message['pos'],
-               "battery_voltage": message["vbat"]}
-        print(out)
-
-    def set_motor_speed_distance(self, index, speed, encoder_ticks):
-        raise NotImplementedError
-        index -= 1
-        assert 0 <= index <= 3
-        assert 0 <= speed <= 255
-        assert type(encoder_ticks) is int
-        self.msg["m"][index] = ["dst", speed, encoder_ticks]
-        self.udp.set(self.msg)
-
-    def set_motor_speed(self, index, speed):
-        """
-        Uses PID to drive motor at fixed speed
-        args:
-            - index: int in range 0-3. Which motor to drive?
-            - speed: float in range TODO. What speed to drive it with?
-                     Negative value go backaward
-        """
-        raise NotImplementedError
-        index -=1
-        assert 0 <= index <= 3
-        assert -255 <= power <= 255
-        self.msg["m"][index] = ["spd", speed]
-        self.udp.set(self.msg)
 
     def set_motor_power(self, index, power):
         """
@@ -215,6 +166,35 @@ class Robot:
         self.msg["s"][index] = width
         self.udp.set(self.msg)
 
+    def get(self):
+        """
+        Returns the state of the robots sensors.
+        returns:
+            - dictionary of sensor readings.
+            Example
+             {"motor_position": [0,0, 100, -100],
+               "battery_voltage": 9.43}
+
+        """
+        message = self.udp.get()
+        if message is None:
+            return None
+
+        out = {"motor_position": message['pos'],
+               "battery_voltage": message["vbat"]}
+
+        return out
+
+    def debug(self):
+        """
+        Displays debug messages from the c code
+        """
+        message = self.udp.get()
+        if message is None:
+            return None
+
+        return message["debug"]
+
     def disable_servo(self, index):
         raise NotImplementedError
         index -= 1
@@ -222,16 +202,48 @@ class Robot:
         self.msg["s"][index] = None
         self.udp.set(self.msg)
 
-def map(value, in_min, in_max, out_min, out_max):
-    # Perform linear interpolation
-    output = (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+    def set_motor_pid(self, index, kp, ki, kd):
+        raise NotImplementedError
+        index -= 1
+        assert 0 <= index <= 3
 
-    if output > out_max:
-        return out_max
-    if output < out_min:
-        return out_min
+        setting = self.get_settings_version()
+        self.msg["PID"] = [index, kp, ki, kd]
+        self.udp.set(self.msg)
 
-    return output
+        # wait for new settings version number
+        while (self.get_settings_version() == setting):
+            pass
+
+        self.msg.pop("PID")
+
+    def get_settings_version(self):
+        raise NotImplementedError
+        return self.udp.get()["set_ver"]
+
+    def set_motor_speed_distance(self, index, speed, encoder_ticks):
+        raise NotImplementedError
+        index -= 1
+        assert 0 <= index <= 3
+        assert 0 <= speed <= 255
+        assert type(encoder_ticks) is int
+        self.msg["m"][index] = ["dst", speed, encoder_ticks]
+        self.udp.set(self.msg)
+
+    def set_motor_speed(self, index, speed):
+        """
+        Uses PID to drive motor at fixed speed
+        args:
+            - index: int in range 0-3. Which motor to drive?
+            - speed: float in range TODO. What speed to drive it with?
+                     Negative value go backaward
+        """
+        raise NotImplementedError
+        index -=1
+        assert 0 <= index <= 3
+        assert -255 <= power <= 255
+        self.msg["m"][index] = ["spd", speed]
+        self.udp.set(self.msg)
 
 if __name__ == "__main__":
     import time
