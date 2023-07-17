@@ -71,13 +71,12 @@ class UDP:
 class Robot:
     def __init__(self, ip, password=None):
         if password == None:
-            password = "test"
+            password = "secret"
         self.udp = UDP(ip)
         self.msg = {"p": password,
                     "s": [None, None, None, None],
                     "m": [["off"], ["off"], ["off"], ["off"]],
                     "led": [0, 255, 0, 0]}
-
 
 
         self.com_tread = threading.Thread(target=self.udp.communicate, daemon=True)
@@ -193,7 +192,7 @@ class Robot:
 
     def set_servo(self, index, angle):
         """
-        Tells a servo to go to a given angle
+        Tells a servo to go to a given pulse width
         args:
             - index: int in range 0-3. Which servo to move?
             - angle: int in range 0 - 270. Want angle do we want it at?
@@ -208,6 +207,7 @@ class Robot:
         assert 0 <= index <= 3
         self.msg["s"][index] = None
         self.udp.set(self.msg)
+
 
 def map(value, in_min, in_max, out_min, out_max):
     # Perform linear interpolation

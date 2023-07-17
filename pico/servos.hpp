@@ -101,13 +101,14 @@ class ServosHardware{
     }
 
 
-    void set_angle(int servo_number, int angle){
+    void set_pulse_width(int servo_number, int width){
         ASSERT(servo_number>=0);
         ASSERT(servo_number<4);
         //TODO: implement actual angle to pulse width conversion
-        ASSERT(angle>=1000);
-        ASSERT(angle<=2000);
-        servo_value[servo_number]=angle;
+        // printf("%d", width)
+        ASSERT(width>=500);
+        ASSERT(width<=2500);
+        servo_value[servo_number]=width;
         generate_array();
     }
 
@@ -118,4 +119,20 @@ class ServosHardware{
         generate_array();
     }
 
+    void exec_command(int servo_number, Servo command){
+        switch (command.on){
+          case false:
+            set_power(servo_number, false);
+            // set_pulse_width(servo_number, 0);
+            break;
+          case true:
+            set_power(servo_number, true);
+            set_pulse_width(servo_number, command.pulse_width);
+            break;
+          default:
+            ASSERTM(false, "Not Implemented");
+        }
+    }
+
 };
+

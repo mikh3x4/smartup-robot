@@ -18,7 +18,7 @@ typedef struct {
 
 typedef struct {
     bool on = false;
-    int angle = 5;
+    int pulse_width = 1500;
 } Servo;
 
 
@@ -231,7 +231,7 @@ public:
             case 'n': command_struct->servos[i].on = false; break;
             default: 
                 command_struct->servos[i].on = true;
-                command_struct->servos[i].angle = parse_int();
+                command_struct->servos[i].pulse_width = parse_int();
         }
 
         current++;
