@@ -1,9 +1,19 @@
+"""
+Przklad kontrolowania robota na obozie Adamed Smartup
+
+UWAGA: Nie modyfikujcie tego pilku, on moze byc nadpisany przez nowe wersje example.py
+
+Zrobcie swoj plik do modyfikacji!
+"""
 
 from robot import Robot, map
 from gamepad import Gamepad
 from time import sleep
 
+# UWAGA: Sprawdzcie czy gamepad jest w trybie ANALOG
 gamepad = Gamepad()
+
+# Sprawdzcie IP swojego robota!
 # robot = Robot('192.168.1.10')
 robot = Robot('172.20.10.13')
 
@@ -43,6 +53,5 @@ while 1:
     robot.set_led(0,255,0, 0)
 
     print(robot.get())
-    print(robot.debug())
 
 
