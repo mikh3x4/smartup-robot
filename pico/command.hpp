@@ -189,7 +189,7 @@ public:
                 command_struct->motors[i].mode = DISTANCE;
                 current++;
                 ASSERT_RETURN(current->type == JSMN_PRIMITIVE);
-                command_struct->motors[i].speed = parse_int();
+                command_struct->motors[i].power = parse_int();
                 current++;
 
                 ASSERT_RETURN(current->type == JSMN_PRIMITIVE);

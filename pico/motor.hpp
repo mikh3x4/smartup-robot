@@ -46,7 +46,7 @@ class MotorHardware{
   int pin_a,pin_b;
 
   uint slice_num;
-  int max_speed;
+  int distance_power;
 
   public:
   int wanted_rate,LP_rate,last_LP_rate; //rates are represented in encoder pulses/64ms
@@ -95,16 +95,17 @@ class MotorHardware{
         drive_power(0);
         break;
       case POWER:
-        DEBUG_PRINT("motor %d\n", command.power);
+        DEBUG_PRINT("motor p %d\n", command.power);
         drive_power(command.power);
         break;
       case SPEED:
-        DEBUG_PRINT("motor %d\n", command.speed);
+        DEBUG_PRINT("motor s %d\n", command.speed);
         drive_speed(command.speed);
         break;
       case DISTANCE:
+        DEBUG_PRINT("motor d %d\n", command.distance,command.power);
+        drive_distance(command.distance, command.power);
         break;
-        DEBUG_PRINT("motor %d\n", command.distance,command.speed);
       default:
         ASSERTM(false, "Not Implemented");
     }
@@ -154,10 +155,10 @@ class MotorHardware{
       driving_mode=SPEED;
       wanted_rate=speed;
     }
-    void drive_distance(int new_position,int speed){
+    void drive_distance(int new_position,int power){
       driving_mode=DISTANCE;
       target_distance=new_position;
-      max_speed=speed;
+      distance_power=power;
     }
 
   //makes sense only in drive distance mode
@@ -195,13 +196,13 @@ class MotorHardware{
         {
           float arrival_time=float(target_distance-new_count)/(abs(LP_rate)+speed_offset); //time (in 64ms units) to get to the end
           if((arrival_time>slow_down_threshold)&&(abs(target_distance-new_count)>500))
-            drive_power((target_distance-new_count)>0?max_speed:-max_speed);
+            drive_power((target_distance-new_count)>0?distance_power:-distance_power);
           else
           {
             //drop power with some function (map dt from 0-10 -> 0-1)
             arrival_time/=slow_down_threshold;
-            printf("current speed: %d\n",int(arrival_time*max_speed));
-            drive_power(clamp(arrival_time*max_speed,-1023.0f,1023.0f));
+            printf("current speed: %d\n",int(arrival_time*distance_power));
+            drive_power(clamp(arrival_time*distance_power,-1023.0f,1023.0f));
           }
             
         }

@@ -226,20 +226,20 @@ class Robot:
         raise NotImplementedError
         return self.udp.get()["set_ver"]
 
-    def set_motor_speed_distance(self, index, speed, encoder_ticks):
+    def set_motor_power_distance(self, index, power, encoder_ticks):
         raise NotImplementedError
         index -= 1
         assert 0 <= index <= 3
-        assert 0 <= speed <= 255
+        assert -1024 <= power <= 1024
         assert type(encoder_ticks) is int
-        self.msg["m"][index] = ["dst", speed, encoder_ticks]
+        self.msg["m"][index] = ["dst", power, encoder_ticks]
         self.udp.set(self.msg)
 
     def set_motor_speed(self, index, speed):
         """
         Uses PID to drive motor at fixed speed
         args:
-            - index: int in range 0-3. Which motor to drive?
+            - index: int in range 1-4. Which motor to drive?
             - speed: float in range TODO. What speed to drive it with?
                      Negative value go backaward
         """
