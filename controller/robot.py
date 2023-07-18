@@ -186,7 +186,8 @@ class Robot:
             return None
 
         out = {"motor_position": message['pos'],
-               "battery_voltage": message["vbat"]}
+               "battery_voltage": message["vbat"],
+               "motor_position_done": message["done"]}
 
         return out
 
@@ -199,6 +200,36 @@ class Robot:
             return None
 
         return message["debug"]
+
+    def set_motor_power_distance(self, index, power, encoder_ticks):
+        """
+        Used janky algorythm to drive to a given encoder position
+        args:
+            - index: int in range 1-4. Which motor to drive?
+            - power: int in range 0 to 1024 . With what max power to drive to destination
+            - encoder_ticks: what encoder position do we want to drive to?
+        """
+        raise NotImplementedError
+        index -= 1
+        assert 0 <= index <= 3
+        assert 0 <= power <= 1024
+        assert type(encoder_ticks) is int
+        self.msg["m"][index] = ["dst", power, encoder_ticks]
+        self.udp.set(self.msg)
+
+    def set_motor_speed(self, index, speed):
+        """
+        Uses PID to drive motor at fixed speed
+        args:
+            - index: int in range 1-4. Which motor to drive?
+            - speed: int in range -3000 to 3000 . What speed to drive it at? (Arbitrary units for now)
+        """
+        raise NotImplementedError
+        index -=1
+        assert 0 <= index <= 3
+        self.msg["m"][index] = ["spd", speed]
+        self.udp.set(self.msg)
+
 
     def disable_servo(self, index):
         raise NotImplementedError
@@ -226,29 +257,6 @@ class Robot:
         raise NotImplementedError
         return self.udp.get()["set_ver"]
 
-    def set_motor_power_distance(self, index, power, encoder_ticks):
-        raise NotImplementedError
-        index -= 1
-        assert 0 <= index <= 3
-        assert -1024 <= power <= 1024
-        assert type(encoder_ticks) is int
-        self.msg["m"][index] = ["dst", power, encoder_ticks]
-        self.udp.set(self.msg)
-
-    def set_motor_speed(self, index, speed):
-        """
-        Uses PID to drive motor at fixed speed
-        args:
-            - index: int in range 1-4. Which motor to drive?
-            - speed: float in range TODO. What speed to drive it with?
-                     Negative value go backaward
-        """
-        raise NotImplementedError
-        index -=1
-        assert 0 <= index <= 3
-        assert -255 <= power <= 255
-        self.msg["m"][index] = ["spd", speed]
-        self.udp.set(self.msg)
 
 if __name__ == "__main__":
     import time
