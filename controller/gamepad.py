@@ -5,6 +5,9 @@ import time
 
 class Gamepad():
     def __init__(self):
+        """
+        Looks for gamepads and returns a gamepad object if its finds one
+        """
         # vendor_id= 1356
         # product_id= 2508
 

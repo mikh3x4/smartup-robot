@@ -4,6 +4,11 @@ Przklad kontrolowania robota na obozie Adamed Smartup
 UWAGA: Nie modyfikujcie tego pilku, on moze byc nadpisany przez nowe wersje example.py
 
 Zrobcie swoj plik do modyfikacji!
+
+Link do dokumentacji jest na:
+
+https://bit.ly/smartup-robot
+
 """
 
 from robot import Robot, map

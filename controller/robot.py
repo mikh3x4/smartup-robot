@@ -81,6 +81,11 @@ class UDP:
 
 class Robot:
     def __init__(self, ip, password="secret"):
+        """
+        Creates a new robot object
+        args:
+            - ip: The ip address of the robot as a string
+        """
 
         self.udp = UDP(ip)
         self.msg = {"p": password,
@@ -124,7 +129,7 @@ class Robot:
         assert 0 <= green <= 255
         assert 0 <= blue <= 255
         assert blink >= 0
-        self.msg["led"] = [red,green,blue,blink]
+        self.msg["led"] = [int(red),int(green),int(blue),int(blink)]
         self.udp.set(self.msg)
 
 
@@ -137,15 +142,15 @@ class Robot:
         """
         index -= 1
         assert 0 <= index <= 3
-        # assert -255 <= power <= 255
-        self.msg["m"][index] = ["pwr", power]
+        assert -1025 <= power <= 1025
+        self.msg["m"][index] = ["pwr", int(power)]
         self.udp.set(self.msg)
 
     def disable_motor(self, index):
         """
         Cuts power to motor
         args:
-            - index: int in range 0-3. Which motor to stop?
+            - index: int in range 1-4. Which motor to stop?
         """
         index -= 1
         assert 0 <= index <= 3
@@ -163,7 +168,7 @@ class Robot:
         index -= 1
         assert 0 <= index <= 3
         assert 500 <= width <= 2500
-        self.msg["s"][index] = width
+        self.msg["s"][index] = int(width)
         self.udp.set(self.msg)
 
     def get(self):
