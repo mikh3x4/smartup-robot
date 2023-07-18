@@ -108,11 +108,16 @@ class MotorHardware{
       default:
         ASSERTM(false, "Not Implemented");
     }
-    driving_mode=command.mode;
 
   }
 
     void drive_power(int power){
+        if(power == 0){
+          driving_mode=OFF;
+        } else {
+            driving_mode=POWER;
+        }
+
         ASSERT(power < PWM_top);
         ASSERT(power > -PWM_top);
         // //check if vbat is out of range
@@ -146,16 +151,21 @@ class MotorHardware{
     }
 
     void drive_speed(int speed){
+      driving_mode=SPEED;
       wanted_rate=speed;
     }
     void drive_distance(int new_position,int speed){
+      driving_mode=DISTANCE;
       target_distance=new_position;
       max_speed=speed;
     }
 
   //makes sense only in drive distance mode
     bool is_done(){
+      if(driving_mode == DISTANCE){
         return abs(target_distance-encoder.get_count())<100;
+      }
+      return true;
     }
 
     void dynamics(){
