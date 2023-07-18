@@ -87,14 +87,25 @@ int main() {
 
     multicore_launch_core1(core1_entry);
     motor_2.driving_mode=MOTOR_MODE::DISTANCE;
-    bool i;
+    uint8_t i;
     while(1)
     {
-        i=!i;
-        if(i)
-            motor_2.drive_distance(20000);
-        else
-            motor_2.drive_distance(-20000);
+        i=(i+1)%4;
+        switch(i)
+        {
+        case 0:
+            motor_2.drive_distance(20000,1023);
+        break;
+        case 1:
+            motor_2.drive_distance(-20000,1023);
+        break;
+        case 2:
+            motor_2.drive_distance(20000,255);
+        break;
+        case 3:
+            motor_2.drive_distance(-20000,255);
+        break;
+        }
         motor_1.drive_power(300);
         motor_3.drive_power(300);
         motor_4.drive_power(300);

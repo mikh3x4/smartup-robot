@@ -31,8 +31,8 @@ const float VBAT_MIN=6.2f;
 const float VBAT_MAX=8.6f;
 const int P_const=3;
 const int I_const=1;
-const int slow_down_threshold=3; //64*3ms
-const int speed_offset=200;
+const float slow_down_threshold=0.3; //64*3ms
+const int speed_offset=500;
 
 template<class T>
 static inline T clamp(const T v, const T lo, const T hi)
@@ -46,6 +46,7 @@ class MotorHardware{
   int pin_a,pin_b;
 
   uint slice_num;
+  int max_speed;
 
   public:
   int wanted_rate,LP_rate,last_LP_rate; //rates are represented in encoder pulses/64ms
@@ -103,7 +104,7 @@ class MotorHardware{
         break;
       case DISTANCE:
         break;
-        DEBUG_PRINT("motor %d\n", command.distance);
+        DEBUG_PRINT("motor %d\n", command.distance,command.speed);
       default:
         ASSERTM(false, "Not Implemented");
     }
@@ -147,12 +148,14 @@ class MotorHardware{
     void drive_speed(int speed){
       wanted_rate=speed;
     }
-    void drive_distance(int new_position){
+    void drive_distance(int new_position,int speed){
       target_distance=new_position;
+      max_speed=speed;
     }
 
+  //makes sense only in drive distance mode
     bool is_done(){
-        return false;
+        return abs(target_distance-new_count)<100;
     }
 
     void dynamics(){
@@ -180,16 +183,15 @@ class MotorHardware{
         break;
         case DISTANCE:
         {
-          int arrival_time=(target_distance-new_count)/(abs(LP_rate)+speed_offset); //time (in 64ms units) to get to the end
-          if(arrival_time>slow_down_threshold)
-            drive_power((target_distance-new_count)>0?1023:-1023);
+          float arrival_time=float(target_distance-new_count)/(abs(LP_rate)+speed_offset); //time (in 64ms units) to get to the end
+          if((arrival_time>slow_down_threshold)&&(abs(target_distance-new_count)>500))
+            drive_power((target_distance-new_count)>0?max_speed:-max_speed);
           else
           {
-            //we need more precise estimate
-            float dt=(target_distance-new_count)/(abs(LP_rate)+speed_offset); //time (in 64ms units) to get to the end
             //drop power with some function (map dt from 0-10 -> 0-1)
-            dt/=slow_down_threshold;
-            drive_power(dt*1023);
+            arrival_time/=slow_down_threshold;
+            printf("current speed: %d\n",int(arrival_time*max_speed));
+            drive_power(clamp(arrival_time*max_speed,-1023.0f,1023.0f));
           }
             
         }
