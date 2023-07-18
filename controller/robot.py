@@ -59,18 +59,18 @@ class UDP:
         while self.outgoing == None:
             pass
 
-        # try:
         while self.thread_running:
-            time.sleep(0.05)
-            if self.thread_paused:
-                continue
+            try:
+                time.sleep(0.05)
+                if self.thread_paused:
+                    continue
 
-            self.send_message(self.outgoing)
-            incoming = self.get_most_recent()
-            if incoming != None:
-                self.incoming = incoming
-        # except Exception as e:
-        #     print(e)
+                self.send_message(self.outgoing)
+                incoming = self.get_most_recent()
+                if incoming != None:
+                    self.incoming = incoming
+            except Exception as e:
+                print(e)
 
     def set(self, message):
         self.outgoing = message
