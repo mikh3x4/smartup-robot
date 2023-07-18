@@ -31,7 +31,7 @@ const float VBAT_MIN=6.2f;
 const float VBAT_MAX=8.6f;
 const int P_const=3;
 const int I_const=1;
-const float slow_down_threshold=0.3; //64*3ms
+const float slow_down_threshold=0.4; //64*3ms
 const int speed_offset=500;
 
 template<class T>
@@ -155,7 +155,7 @@ class MotorHardware{
 
   //makes sense only in drive distance mode
     bool is_done(){
-        return abs(target_distance-new_count)<100;
+        return abs(target_distance-encoder.get_count())<100;
     }
 
     void dynamics(){
