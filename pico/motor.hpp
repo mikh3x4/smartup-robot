@@ -10,6 +10,7 @@
 #include <command.hpp>
 #include <v_bat.hpp>
 
+
 // enum MOTOR_MODE {OFF, POWER, SPEED, DISTANCE};
 //
 // typedef struct {
@@ -28,16 +29,30 @@
 const uint16_t PWM_top=1075-1;
 const float VBAT_MIN=6.2f;
 const float VBAT_MAX=8.6f;
+const int P_const=3;
+const int I_const=1;
+const int slow_down_threshold=3; //64*3ms
+const int speed_offset=200;
+
+template<class T>
+static inline T clamp(const T v, const T lo, const T hi)
+{
+    return v<lo ? lo : (hi<v ? hi : v);
+}
 
 template <typename EncoderType>
 class MotorHardware{
 
-  int pin_a;
-  int pin_b;
+  int pin_a,pin_b;
 
   uint slice_num;
 
   public:
+  int wanted_rate,LP_rate,last_LP_rate; //rates are represented in encoder pulses/64ms
+  int last_count;
+  int integral_state;
+  int target_distance;
+  MOTOR_MODE driving_mode; //TODO:make private after testing
   EncoderType encoder; //will template on this for 4th encoder
 
   bool init(int motor_pin_a, int motor_pin_b, int encoder_pin_a, int encoder_pin_b){
@@ -69,6 +84,10 @@ class MotorHardware{
 
 
     void exec_command(Motor command){
+      if(command.mode!=SPEED)
+      {
+        integral_state=0;
+      }
     switch (command.mode){
       case OFF:
         DEBUG_PRINT("motor off \n");
@@ -78,23 +97,31 @@ class MotorHardware{
         DEBUG_PRINT("motor %d\n", command.power);
         drive_power(command.power);
         break;
+      case SPEED:
+        DEBUG_PRINT("motor %d\n", command.speed);
+        drive_speed(command.speed);
+        break;
+      case DISTANCE:
+        break;
+        DEBUG_PRINT("motor %d\n", command.distance);
       default:
         ASSERTM(false, "Not Implemented");
     }
+    driving_mode=command.mode;
 
   }
 
     void drive_power(int power){
         ASSERT(power < PWM_top);
         ASSERT(power > -PWM_top);
-        //check if vbat is out of range
-        if(ADC.smoothed_state<VBAT_MIN)
-          return;
-        //check if vbat is out of range
-        if(ADC.smoothed_state>VBAT_MAX)
-          return;
-        //scale power to 6V
-        power=power*6.0f/ADC.smoothed_state;
+        // //check if vbat is out of range
+        // if(ADC.smoothed_state<VBAT_MIN)
+        //   return;
+        // //check if vbat is out of range
+        // if(ADC.smoothed_state>VBAT_MAX)
+        //   return;
+        // //scale power to 6V
+        // power=power*6.0f/ADC.smoothed_state;
 
         uint16_t power_left,power_right;
         constexpr uint16_t max_power=PWM_top*0.95;
@@ -117,12 +144,60 @@ class MotorHardware{
         pwm_set_both_levels(slice_num,power_left,power_right);
     }
 
-    // TODO Implement more of them
     void drive_speed(int speed){
+      wanted_rate=speed;
+    }
+    void drive_distance(int new_position){
+      target_distance=new_position;
     }
 
     bool is_done(){
         return false;
+    }
+
+    void dynamics(){
+      int new_count;
+      new_count=encoder.get_count();
+      LP_rate=(LP_rate*63)/64+(new_count-last_count);
+      last_count=new_count;
+
+      switch(driving_mode)
+      {
+        case OFF:
+        case POWER:
+        break;
+        case SPEED:
+        {
+          int drive_power_var=0;
+          //Proportional factor
+          drive_power_var=P_const*(wanted_rate-LP_rate);
+          //Integral factor
+          integral_state+=I_const*(wanted_rate-LP_rate);
+          drive_power_var+=integral_state/100;
+          //drive output
+          drive_power(clamp(drive_power_var,-1024,1024));
+        }
+        break;
+        case DISTANCE:
+        {
+          int arrival_time=(target_distance-new_count)/(abs(LP_rate)+speed_offset); //time (in 64ms units) to get to the end
+          if(arrival_time>slow_down_threshold)
+            drive_power((target_distance-new_count)>0?1023:-1023);
+          else
+          {
+            //we need more precise estimate
+            float dt=(target_distance-new_count)/(abs(LP_rate)+speed_offset); //time (in 64ms units) to get to the end
+            //drop power with some function (map dt from 0-10 -> 0-1)
+            dt/=slow_down_threshold;
+            drive_power(dt*1023);
+          }
+            
+        }
+        break;
+        default:
+        ASSERT(false);
+        break;
+      }
     }
 
 };

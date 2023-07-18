@@ -53,7 +53,18 @@ void init(){
 void core1_entry() {
     printf("hello from core 1\n");
     motor_1.encoder.init_core_sepecific();
-    while(1);
+    while(1)
+    {
+        motor_1.dynamics();
+        motor_2.dynamics();
+        motor_3.dynamics();
+        motor_4.dynamics();
+        //distance debug
+        printf("status: %d %d %d\n",motor_2.target_distance,motor_2.last_count,motor_2.LP_rate);
+        //PID debug
+        //printf("status: %d %d %d %d\n",motor_2.wanted_rate,motor_2.LP_rate,motor_2.integral_state,motor_2.last_count);
+        sleep_ms(10);
+    }
 }
 
 
@@ -75,6 +86,21 @@ int main() {
     servos.init();
 
     multicore_launch_core1(core1_entry);
+    motor_2.driving_mode=MOTOR_MODE::DISTANCE;
+    bool i;
+    while(1)
+    {
+        i=!i;
+        if(i)
+            motor_2.drive_distance(20000);
+        else
+            motor_2.drive_distance(-20000);
+        motor_1.drive_power(300);
+        motor_3.drive_power(300);
+        motor_4.drive_power(300);
+        //printf("encoder status: %d %d %d %d\n",motor_1.encoder.get_count(),motor_2.encoder.get_count(),motor_3.encoder.get_count(),motor_4.encoder.get_count());
+        sleep_ms(10000);
+    }
 
     while (1) {
         main_data.telemetry.clear_debug();
