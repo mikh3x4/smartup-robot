@@ -209,7 +209,7 @@ class Robot:
             - power: int in range 0 to 1024 . With what max power to drive to destination
             - encoder_ticks: what encoder position do we want to drive to?
         """
-        raise NotImplementedError
+        # raise NotImplementedError
         index -= 1
         assert 0 <= index <= 3
         assert 0 <= power <= 1024
@@ -224,7 +224,7 @@ class Robot:
             - index: int in range 1-4. Which motor to drive?
             - speed: int in range -3000 to 3000 . What speed to drive it at? (Arbitrary units for now)
         """
-        raise NotImplementedError
+        # raise NotImplementedError
         index -=1
         assert 0 <= index <= 3
         self.msg["m"][index] = ["spd", speed]
