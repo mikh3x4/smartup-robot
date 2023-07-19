@@ -53,21 +53,23 @@ class Gamepad():
         If the gamepad disconnects or 300ms have passed without an last_update
         if raises a ConnectionError
         """
-        while 1:
-            report = self.g.read(64)
-            if not report:
-                break
-            else:
-                self.report = report
-                self.last_update = time.monotonic()
+        try:
+            while 1:
+                report = self.g.read(64)
+                if not report:
+                    break
+                else:
+                    self.report = report
+                    self.last_update = time.monotonic()
+        except Exception as e:
+            print(e)
+            raise ConnectionError
 
         if self.report is None:
             raise ConnectionError
-            # return None
 
         if self.last_update + 0.3 < time.monotonic():
             raise ConnectionError
-            # return None
 
         return self.parse(self.report)
 
