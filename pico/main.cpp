@@ -60,7 +60,7 @@ void core1_entry() {
         motor_3.dynamics();
         motor_4.dynamics();
         //distance debug
-        printf("status: %d %d %d\n",motor_2.target_distance,motor_2.last_count,motor_2.LP_rate);
+        //printf("status: %d %d %d\n",motor_4.target_distance,motor_4.last_count,motor_4.LP_rate);
         //PID debug
         //printf("status: %d %d %d %d\n",motor_2.wanted_rate,motor_2.LP_rate,motor_2.integral_state,motor_2.last_count);
         sleep_ms(10);
@@ -82,37 +82,42 @@ int main() {
     motor_3.init(MOTOR_3A, MOTOR_3B, ENCODER_3A, ENCODER_3B);
     motor_4.init(MOTOR_4A, MOTOR_4B, ENCODER_4A, ENCODER_4B);
     enable_PWM();
+    motor_1.calibrate();
+    motor_2.calibrate();
+    motor_3.calibrate();
+    motor_4.calibrate();
 
     servos.init();
 
     multicore_launch_core1(core1_entry);
-
-    // motor_2.driving_mode=MOTOR_MODE::DISTANCE;
-    // uint8_t i;
-    // while(1)
-    // {
-    //     i=(i+1)%4;
-    //     switch(i)
-    //     {
-    //     case 0:
-    //         motor_2.drive_distance(20000,1023);
-    //     break;
-    //     case 1:
-    //         motor_2.drive_distance(-20000,1023);
-    //     break;
-    //     case 2:
-    //         motor_2.drive_distance(20000,255);
-    //     break;
-    //     case 3:
-    //         motor_2.drive_distance(-20000,255);
-    //     break;
-    //     }
-    //     motor_1.drive_power(300);
-    //     motor_3.drive_power(300);
-    //     motor_4.drive_power(300);
-    //     //printf("encoder status: %d %d %d %d\n",motor_1.encoder.get_count(),motor_2.encoder.get_count(),motor_3.encoder.get_count(),motor_4.encoder.get_count());
-    //     sleep_ms(10000);
-    // }
+    motor_3.driving_mode=MOTOR_MODE::DISTANCE;
+    motor_4.driving_mode=MOTOR_MODE::DISTANCE;
+    uint8_t i=3;
+    while(1)
+    {
+        i=(i+1)%4;
+        switch(i)
+        {
+        case 0:
+            motor_3.drive_distance(-10000,1000);
+            motor_4.drive_distance(-10000,1000);
+        break;
+        case 1:
+            motor_3.drive_distance(1000,1000);
+            motor_4.drive_distance(1000,1000);
+        break;
+        case 2:
+            motor_3.drive_distance(-3000,500);
+            motor_4.drive_distance(-3000,500);
+        break;
+        case 3:
+            motor_3.drive_distance(3000,500);
+            motor_4.drive_distance(3000,500);
+        break;
+        }
+        printf("encoder status: %d %d %d %d\n",motor_1.encoder.get_count(),motor_2.encoder.get_count(),motor_3.encoder.get_count(),motor_4.encoder.get_count());
+        sleep_ms(5000);
+    }
 
     while (1) {
         main_data.telemetry.clear_debug();
