@@ -130,10 +130,10 @@ int main() {
             main_data.active_command->estop();
         }
 
-        if( (main_data.telemetry.temp > 32.0) or overtemp){
+        if( (main_data.telemetry.temp > 40.0) or overtemp){
             overtemp = 1;
 
-            printf("Temp %d, %d\n", main_data.telemetry.temp, ADC.get_core_temp());
+            printf("Temp %f, %f\n", main_data.telemetry.temp, ADC.get_core_temp());
             cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
             main_data.active_command->estop();
 

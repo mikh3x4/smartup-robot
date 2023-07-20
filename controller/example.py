@@ -15,7 +15,7 @@ from time import sleep
 gamepad = Gamepad()
 
 # Sprawdzcie IP swojego robota!
-robot = Robot('192.168.1.10')
+robot = Robot('192.168.1.100')
 
 while 1:
     sleep(0.05)

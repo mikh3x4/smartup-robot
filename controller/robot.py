@@ -187,7 +187,9 @@ class Robot:
 
         out = {"motor_position": message['pos'],
                "battery_voltage": message["vbat"],
-               "motor_position_done": message["done"]}
+               "motor_position_done": message["done"],
+               "core_temperature": message["temp"],
+               }
 
         return out
 
