@@ -68,6 +68,8 @@ void core1_entry() {
 }
 
 
+bool overtemp = 0;
+
 int main() {
     init();
 
@@ -128,17 +130,22 @@ int main() {
             main_data.active_command->estop();
         }
 
+        if( (main_data.telemetry.temp > 32.0) or overtemp){
+            overtemp = 1;
+
+            printf("Temp %d, %d\n", main_data.telemetry.temp, ADC.get_core_temp());
+            cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
+            main_data.active_command->estop();
+
+            main_data.active_command->led.red = 0;
+            main_data.active_command->led.green = 0;
+            main_data.active_command->led.blue = 0;
+            main_data.active_command->led.blink = 0;
+        }
+
         main_data.telemetry.v_bat = ADC.get_vbat();
         main_data.telemetry.temp = ADC.get_core_temp();
 
-        if(main_data.telemetry.temp > 32.0){
-            while (1){
-                cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
-                sleep_ms(100);
-                cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
-                sleep_ms(100);
-            }
-        }
 
         main_data.telemetry.encoders_position[0] = motor_1.encoder.get_count();
         main_data.telemetry.encoders_position[1] = motor_2.encoder.get_count();
