@@ -46,7 +46,7 @@ class MotorHardware{
   int pin_a,pin_b;
 
   uint slice_num;
-  int max_speed;
+  int distance_power;
   bool calibrate_direction,calibate_failed;
 
   public:
@@ -169,13 +169,13 @@ class MotorHardware{
         {
           float arrival_time=float(target_distance-new_count)/(abs(LP_rate)+speed_offset); //time (in 64ms units) to get to the end
           if((abs(arrival_time)>slow_down_threshold)&&(abs(target_distance-new_count)>500))
-            drive_power((calibrate_direction^((target_distance-new_count)>0))?max_speed:-max_speed);
+            drive_power((calibrate_direction^((target_distance-new_count)>0))?distance_power:-distance_power);
           else
           {
             //drop power with some function (map dt from 0-10 -> 0-1)
             arrival_time/=slow_down_threshold;
-            //printf("current speed: %d\n",int(arrival_time*max_speed));
-            drive_power(clamp(arrival_time*max_speed*(calibrate_direction?-1:1),-1023.0f,1023.0f));
+            //printf("current speed: %d\n",int(arrival_time*distance_power));
+            drive_power(clamp(arrival_time*distance_power*(calibrate_direction?-1:1),-1023.0f,1023.0f));
           }
             
         }

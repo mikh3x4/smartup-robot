@@ -90,34 +90,35 @@ int main() {
     servos.init();
 
     multicore_launch_core1(core1_entry);
-    motor_3.driving_mode=MOTOR_MODE::DISTANCE;
-    motor_4.driving_mode=MOTOR_MODE::DISTANCE;
-    uint8_t i=3;
-    while(1)
-    {
-        i=(i+1)%4;
-        switch(i)
-        {
-        case 0:
-            motor_3.drive_distance(-10000,1000);
-            motor_4.drive_distance(-10000,1000);
-        break;
-        case 1:
-            motor_3.drive_distance(1000,1000);
-            motor_4.drive_distance(1000,1000);
-        break;
-        case 2:
-            motor_3.drive_distance(-3000,500);
-            motor_4.drive_distance(-3000,500);
-        break;
-        case 3:
-            motor_3.drive_distance(3000,500);
-            motor_4.drive_distance(3000,500);
-        break;
-        }
-        printf("encoder status: %d %d %d %d\n",motor_1.encoder.get_count(),motor_2.encoder.get_count(),motor_3.encoder.get_count(),motor_4.encoder.get_count());
-        sleep_ms(5000);
-    }
+
+    // motor_3.driving_mode=MOTOR_MODE::DISTANCE;
+    // motor_4.driving_mode=MOTOR_MODE::DISTANCE;
+    // uint8_t i=3;
+    // while(1)
+    // {
+    //     i=(i+1)%4;
+    //     switch(i)
+    //     {
+    //     case 0:
+    //         motor_3.drive_distance(-10000,1000);
+    //         motor_4.drive_distance(-10000,1000);
+    //     break;
+    //     case 1:
+    //         motor_3.drive_distance(1000,1000);
+    //         motor_4.drive_distance(1000,1000);
+    //     break;
+    //     case 2:
+    //         motor_3.drive_distance(-3000,500);
+    //         motor_4.drive_distance(-3000,500);
+    //     break;
+    //     case 3:
+    //         motor_3.drive_distance(3000,500);
+    //         motor_4.drive_distance(3000,500);
+    //     break;
+    //     }
+    //     printf("encoder status: %d %d %d %d\n",motor_1.encoder.get_count(),motor_2.encoder.get_count(),motor_3.encoder.get_count(),motor_4.encoder.get_count());
+    //     sleep_ms(5000);
+    // }
 
     while (1) {
         main_data.telemetry.clear_debug();
@@ -128,7 +129,16 @@ int main() {
         }
 
         main_data.telemetry.v_bat = ADC.get_vbat();
-        // main_data.telemetry.temp = adc.get_core_temp();
+        main_data.telemetry.temp = ADC.get_core_temp();
+
+        if(main_data.telemetry.temp > 32.0){
+            while (1){
+                cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
+                sleep_ms(100);
+                cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
+                sleep_ms(100);
+            }
+        }
 
         main_data.telemetry.encoders_position[0] = motor_1.encoder.get_count();
         main_data.telemetry.encoders_position[1] = motor_2.encoder.get_count();
