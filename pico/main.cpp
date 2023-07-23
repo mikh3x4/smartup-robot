@@ -124,24 +124,28 @@ int main() {
 
     while (1) {
         main_data.telemetry.clear_debug();
-        if( absolute_time_diff_us(main_data.active_command->recv_time, get_absolute_time()) > 500000) {
+        if( absolute_time_diff_us(main_data.active_command->recv_time, get_absolute_time()) > 900000) {
             printf("Stale command! ESTOP\n");
             DEBUG_PRINT("Stale Cmd! ESTOP\n");
             main_data.active_command->estop();
         }
 
-        if( (main_data.telemetry.temp > 40.0) or overtemp){
-            overtemp = 1;
-
             printf("Temp %f, %f\n", main_data.telemetry.temp, ADC.get_core_temp());
-            cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
-            main_data.active_command->estop();
 
-            main_data.active_command->led.red = 0;
-            main_data.active_command->led.green = 0;
-            main_data.active_command->led.blue = 0;
-            main_data.active_command->led.blink = 0;
-        }
+            // printf("computer IP: %s\n", ip4addr_ntoa( &main_data.active_command->telemetry_address ));
+
+        // if( (main_data.telemetry.temp > 40.0) or overtemp){
+        //     overtemp = 1;
+        //
+        //     printf("Temp %f, %f\n", main_data.telemetry.temp, ADC.get_core_temp());
+        //     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
+        //     main_data.active_command->estop();
+        //
+        //     main_data.active_command->led.red = 0;
+        //     main_data.active_command->led.green = 0;
+        //     main_data.active_command->led.blue = 0;
+        //     main_data.active_command->led.blink = 0;
+        // }
 
         main_data.telemetry.v_bat = ADC.get_vbat();
         main_data.telemetry.temp = ADC.get_core_temp();
