@@ -123,11 +123,23 @@ int main() {
     // }
 
     while (1) {
+            servos.set_pulse_width(0, 1500);
+            sleep_ms(1000);
+            servos.set_power(0,1);
+            printf("ON\n");
+
+            sleep_ms(1000);
+            servos.set_power(0,0);
+            printf("OFF\n");
+    }
+
+    while (1) {
         main_data.telemetry.clear_debug();
         if( absolute_time_diff_us(main_data.active_command->recv_time, get_absolute_time()) > 900000) {
             printf("Stale command! ESTOP\n");
             DEBUG_PRINT("Stale Cmd! ESTOP\n");
             main_data.active_command->estop();
+
         }
 
             printf("Temp %f, %f\n", main_data.telemetry.temp, ADC.get_core_temp());
