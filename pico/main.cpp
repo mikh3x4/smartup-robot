@@ -31,7 +31,7 @@ Networking main_data;
 
 RBGLed rgb_led;
 
-MotorHardware<InteruptEncoder> motor_1; //Waiting for interupt encoders, probably can wait
+MotorHardware<Encoder> motor_1;
 MotorHardware<Encoder> motor_2;
 MotorHardware<Encoder> motor_3;
 MotorHardware<Encoder> motor_4;
@@ -52,7 +52,6 @@ void init(){
 
 void core1_entry() {
     printf("hello from core 1\n");
-    motor_1.encoder.init_core_sepecific();
     while(1)
     {
         motor_1.dynamics();
