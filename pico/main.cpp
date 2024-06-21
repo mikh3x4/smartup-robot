@@ -121,16 +121,16 @@ int main() {
     //     sleep_ms(5000);
     // }
 
-    while (1) {
-            servos.set_pulse_width(0, 1500);
-            sleep_ms(1000);
-            servos.set_power(0,1);
-            printf("ON\n");
-
-            sleep_ms(1000);
-            servos.set_power(0,0);
-            printf("OFF\n");
-    }
+    // while (1) {
+    //         servos.set_pulse_width(0, 1500);
+    //         sleep_ms(1000);
+    //         servos.set_power(0,1);
+    //         printf("ON\n");
+    //
+    //         sleep_ms(1000);
+    //         servos.set_power(0,0);
+    //         printf("OFF\n");
+    // }
 
     while (1) {
         main_data.telemetry.clear_debug();
