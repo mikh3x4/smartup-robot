@@ -16,25 +16,25 @@
 #define SERVO_DATA 7
 
 
-#define ENCODER_1A 22
-#define ENCODER_1B 9
-#define MOTOR_1A 27
-#define MOTOR_1B 26
+#define ENCODER_1A 14
+#define ENCODER_1B 15
+#define MOTOR_1A 17
+#define MOTOR_1B 16
 
-#define ENCODER_2A 10
-#define ENCODER_2B 11
-#define MOTOR_2A 21
-#define MOTOR_2B 20
+#define ENCODER_2A 12
+#define ENCODER_2B 13
+#define MOTOR_2A 19
+#define MOTOR_2B 18
 
-#define ENCODER_3A 12
-#define ENCODER_3B 13
-#define MOTOR_3A 19
-#define MOTOR_3B 18
+#define ENCODER_3A 10
+#define ENCODER_3B 11
+#define MOTOR_3A 21
+#define MOTOR_3B 20
 
-#define ENCODER_4A 14
-#define ENCODER_4B 15
-#define MOTOR_4A 17
-#define MOTOR_4B 16
+#define ENCODER_4A 8
+#define ENCODER_4B 9
+#define MOTOR_4A 27
+#define MOTOR_4B 26
 
 //for timing servos
 #define DMA_PWM_SLICE 3
