@@ -43,11 +43,17 @@ void init(){
     stdio_init_all();
 
     ASSERTM(not cyw43_arch_init(), "failed to initialise\n");
-    cyw43_arch_enable_sta_mode();
 
-    printf("Connecting to %s Wi-Fi...\n", WIFI_SSID);
-    ASSERTM(not cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000), "failed to connect to wifi\n");
-    printf("Connected.\n");
+    if(1){
+        cyw43_arch_enable_ap_mode("Smartup 1", "testing123", CYW43_AUTH_WPA2_AES_PSK);
+        printf("created WIFI");
+    }else{
+        cyw43_arch_enable_sta_mode();
+
+        printf("Connecting to %s Wi-Fi...\n", WIFI_SSID);
+        ASSERTM(not cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000), "failed to connect to wifi\n");
+        printf("Connected.\n");
+    }
 }
 
 void core1_entry() {
@@ -121,16 +127,30 @@ int main() {
     //     sleep_ms(5000);
     // }
 
-    // while (1) {
-    //         servos.set_pulse_width(0, 1500);
-    //         sleep_ms(1000);
-    //         servos.set_power(0,1);
-    //         printf("ON\n");
-    //
-    //         sleep_ms(1000);
-    //         servos.set_power(0,0);
-    //         printf("OFF\n");
-    // }
+    while (1) {
+        rgb_led.set_color(255,
+                          0,
+                          0,
+                          0);
+            servos.set_power(0,1);
+            servos.set_pulse_width(0, 1500);
+            sleep_ms(3000);
+            servos.set_pulse_width(0, 1000);
+            sleep_ms(3000);
+            printf("ON\n");
+
+        // motor_4.drive_power(1023);
+
+            servos.set_power(0,0);
+        rgb_led.set_color(0,
+                          0,
+                          0,
+                          0);
+
+            sleep_ms(3000);
+        // motor_4.drive_power(0);
+            printf("OFF\n");
+    }
 
     while (1) {
         main_data.telemetry.clear_debug();
