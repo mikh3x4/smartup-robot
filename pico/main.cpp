@@ -78,6 +78,7 @@ bool overtemp = 0;
 int main() {
     init();
 
+    sleep_ms(500);
     main_data.init();
 
     rgb_led.init(LED_RED, LED_GREEN, LED_BLUE);
@@ -127,7 +128,7 @@ int main() {
     //     sleep_ms(5000);
     // }
 
-    while (1) {
+    while (0) {
         rgb_led.set_color(255,
                           0,
                           0,
@@ -161,7 +162,7 @@ int main() {
 
         }
 
-            printf("Temp %f, %f\n", main_data.telemetry.temp, ADC.get_core_temp());
+            printf("ADC %f, %f\n", ADC.get_vbat(), ADC.get_core_temp());
 
             // printf("computer IP: %s\n", ip4addr_ntoa( &main_data.active_command->telemetry_address ));
 

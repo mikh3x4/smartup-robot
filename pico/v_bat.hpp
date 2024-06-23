@@ -10,7 +10,8 @@
 const uint buffer_length=16; //nie ruszac zahardcodowane w innych miejscach
 
 class {
-    const float conversion_factor = (43.0 / 10.0)*3.3f / (1 << 12);
+    // const float conversion_factor = (43.0 / 10.0)*3.3f / (1 << 12);
+    const float conversion_factor = 3.3f / (1 << 12);
     uint8_t dma_ch1,dma_ch2;
 public:
     uint16_t ADC_buffer[buffer_length] __attribute__((aligned(buffer_length*sizeof(uint16_t *))));;
