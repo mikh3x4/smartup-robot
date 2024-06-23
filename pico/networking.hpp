@@ -11,6 +11,8 @@
 #include "lwip/pbuf.h"
 #include "lwip/udp.h"
 
+#include "dhcpserver.h"
+
 #define UDP_PORT 8850
 #define BEACON_MSG_LEN_MAX 1024
 #define BEACON_TARGET "192.168.4.247"
@@ -24,6 +26,8 @@
 
 
 enum ROBOT_STATE {RUNNING, ESTOP, LOW_BATTERY, INIT, MULIPLE_CONTROLLERS};
+
+dhcp_server_t dhcp_server;
 
 void udp_recv_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
 
@@ -73,6 +77,8 @@ public:
 	netif_set_addr(netif_default, &ip, &mask, &ip);
 
         printf("IP address: %s\n", ip4addr_ntoa(netif_ip4_addr(netif_list)));
+
+	dhcp_server_init(&dhcp_server, &netif_default->ip_addr, &netif_default->netmask, "bot");
 
         /// IP STUFF DONE
         

@@ -29,6 +29,7 @@ pico_sdk_init()
 
 add_executable(my_proj
         main.cpp
+        dhcpserver.c
         )
 
 # pull in common dependencies
