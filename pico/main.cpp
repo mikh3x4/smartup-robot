@@ -122,20 +122,27 @@ int main() {
             main_data.active_command->estop();
 
         }
-            printf("ADC %f, %f\n", ADC.get_vbat(), ADC.get_core_temp());
-            printf("Computer IP: %s\n", ip4addr_ntoa( &main_data.active_command->telemetry_address ));
+        printf("ADC %f, %f\n", ADC.get_vbat(), ADC.get_core_temp());
+        printf("Computer IP: %s\n", ip4addr_ntoa( &main_data.active_command->telemetry_address ));
 
+        // cyr43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
         // if( (main_data.telemetry.temp > 40.0) or overtemp){
         //     overtemp = 1;
         //
         //     printf("Temp %f, %f\n", main_data.telemetry.temp, ADC.get_core_temp());
         //     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
-        //     main_data.active_command->estop();
+        //     main_data.active_command->estop(); // might cause race condition with async recv
         //
         //     main_data.active_command->led.red = 0;
         //     main_data.active_command->led.green = 0;
         //     main_data.active_command->led.blue = 0;
         //     main_data.active_command->led.blink = 0;
+        // }
+
+        // if( main_data.telemetry.v_bat < 9.9){
+        //     printf("V BAT %f, \n", main_data.telemetry.v_bat);
+        //     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
+        // }else{
         // }
 
         main_data.telemetry.v_bat = ADC.get_vbat();
