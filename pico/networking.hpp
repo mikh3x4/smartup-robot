@@ -11,7 +11,7 @@
 #include "lwip/pbuf.h"
 #include "lwip/udp.h"
 
-#include "dhcpserver.h"
+#include "dhcpserver/dhcpserver.h"
 
 #define UDP_PORT 8850
 #define BEACON_MSG_LEN_MAX 1024

@@ -29,7 +29,7 @@ pico_sdk_init()
 
 add_executable(my_proj
         main.cpp
-        dhcpserver.c
+        dhcpserver/dhcpserver.c
         )
 
 # pull in common dependencies
@@ -47,6 +47,7 @@ target_compile_definitions(my_proj PRIVATE PARAM_ASSERTIONS_ENABLE_ALL=1)
 
 target_include_directories(my_proj PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
+        ${CMAKE_CURRENT_LIST_DIR}/dhcpserver
         )
 
 target_link_libraries(my_proj
