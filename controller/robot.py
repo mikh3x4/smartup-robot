@@ -80,7 +80,7 @@ class UDP:
 
 
 class Robot:
-    def __init__(self, ip, password="secret"):
+    def __init__(self, ip="172.27.18.1", password="secret"):
         """
         Creates a new robot object
         args:

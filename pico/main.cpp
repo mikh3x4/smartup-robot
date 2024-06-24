@@ -47,7 +47,7 @@ void init(){
     if(1){
         cyw43_arch_enable_ap_mode("Smartup 1", "testing123", CYW43_AUTH_WPA2_AES_PSK);
         printf("created WIFI");
-    }else{
+    }else{//used in the past with a centeral access point
         cyw43_arch_enable_sta_mode();
 
         printf("Connecting to %s Wi-Fi...\n", WIFI_SSID);
@@ -64,10 +64,6 @@ void core1_entry() {
         motor_2.dynamics();
         motor_3.dynamics();
         motor_4.dynamics();
-        //distance debug
-        //printf("status: %d %d %d\n",motor_4.target_distance,motor_4.last_count,motor_4.LP_rate);
-        //PID debug
-        //printf("status: %d %d %d %d\n",motor_2.wanted_rate,motor_2.LP_rate,motor_2.integral_state,motor_2.last_count);
         sleep_ms(10);
     }
 }
@@ -79,6 +75,7 @@ int main() {
     init();
 
     sleep_ms(500);
+    main_data.config_wifi();
     main_data.init();
 
     rgb_led.init(LED_RED, LED_GREEN, LED_BLUE);
@@ -99,58 +96,20 @@ int main() {
 
     multicore_launch_core1(core1_entry);
 
-    // motor_3.driving_mode=MOTOR_MODE::DISTANCE;
-    // motor_4.driving_mode=MOTOR_MODE::DISTANCE;
-    // uint8_t i=3;
-    // while(1)
-    // {
-    //     i=(i+1)%4;
-    //     switch(i)
-    //     {
-    //     case 0:
-    //         motor_3.drive_distance(-10000,1000);
-    //         motor_4.drive_distance(-10000,1000);
-    //     break;
-    //     case 1:
-    //         motor_3.drive_distance(1000,1000);
-    //         motor_4.drive_distance(1000,1000);
-    //     break;
-    //     case 2:
-    //         motor_3.drive_distance(-3000,500);
-    //         motor_4.drive_distance(-3000,500);
-    //     break;
-    //     case 3:
-    //         motor_3.drive_distance(3000,500);
-    //         motor_4.drive_distance(3000,500);
-    //     break;
-    //     }
-    //     printf("encoder status: %d %d %d %d\n",motor_1.encoder.get_count(),motor_2.encoder.get_count(),motor_3.encoder.get_count(),motor_4.encoder.get_count());
-    //     sleep_ms(5000);
-    // }
 
     while (0) {
-        rgb_led.set_color(255,
-                          0,
-                          0,
-                          0);
+            // motor_4.drive_power(1023);
+            rgb_led.set_color(0, 255, 0, 0);
             servos.set_power(0,1);
             servos.set_pulse_width(0, 1500);
-            sleep_ms(3000);
-            servos.set_pulse_width(0, 1000);
-            sleep_ms(3000);
             printf("ON\n");
-
-        // motor_4.drive_power(1023);
-
-            servos.set_power(0,0);
-        rgb_led.set_color(0,
-                          0,
-                          0,
-                          0);
-
             sleep_ms(3000);
-        // motor_4.drive_power(0);
+
+            // motor_4.drive_power(0);
+            servos.set_power(0,0);
+            rgb_led.set_color(0, 0, 255, 0);
             printf("OFF\n");
+            sleep_ms(3000);
     }
 
     while (1) {
@@ -161,10 +120,8 @@ int main() {
             main_data.active_command->estop();
 
         }
-
             printf("ADC %f, %f\n", ADC.get_vbat(), ADC.get_core_temp());
-
-            // printf("computer IP: %s\n", ip4addr_ntoa( &main_data.active_command->telemetry_address ));
+            printf("Computer IP: %s\n", ip4addr_ntoa( &main_data.active_command->telemetry_address ));
 
         // if( (main_data.telemetry.temp > 40.0) or overtemp){
         //     overtemp = 1;
@@ -182,14 +139,10 @@ int main() {
         main_data.telemetry.v_bat = ADC.get_vbat();
         main_data.telemetry.temp = ADC.get_core_temp();
 
-
         main_data.telemetry.encoders_position[0] = motor_1.encoder.get_count();
         main_data.telemetry.encoders_position[1] = motor_2.encoder.get_count();
         main_data.telemetry.encoders_position[2] = motor_3.encoder.get_count();
         main_data.telemetry.encoders_position[3] = motor_4.encoder.get_count();
-
-        // DEBUG_PRINT("test print\n");
-        // DEBUG_PRINT("hello %f\n", adc.get_vbat());
 
         motor_1.exec_command(main_data.active_command->motors[0]);
         motor_2.exec_command(main_data.active_command->motors[1]);

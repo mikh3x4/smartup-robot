@@ -15,7 +15,7 @@
 
 #define UDP_PORT 8850
 #define BEACON_MSG_LEN_MAX 1024
-#define BEACON_TARGET "192.168.4.247"
+#define BEACON_TARGET "192.168.4.247" //gets overwritten on connection
 #define BEACON_INTERVAL_MS 1000
 
 #include "jsnm.h"
@@ -62,7 +62,7 @@ public:
         udp_recv(pcb, udp_recv_callback, this);
     }
 
-    void init(){
+    void config_wifi(){
         ip_addr_t ip;
         ipaddr_aton("172.27.18.1", &ip);
 
@@ -74,7 +74,9 @@ public:
         printf("IP address: %s\n", ip4addr_ntoa(netif_ip4_addr(netif_list)));
 
 	dhcp_server_init(&dhcp_server, &netif_default->ip_addr, &netif_default->netmask, "bot");
-        
+    }
+
+    void init(){
         this->udp_pcb = udp_new();
         this->active_command = &this->command_1;
         this->scratch_command = &this->command_2;
