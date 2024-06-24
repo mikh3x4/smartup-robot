@@ -14,9 +14,7 @@ from time import sleep
 # UWAGA: Sprawdzcie czy gamepad jest w trybie ANALOG
 # gamepad = Gamepad()
 
-# Sprawdzcie IP swojego robota!
-# robot = Robot('192.168.1.10')
-robot = Robot('172.20.4.1')
+robot = Robot()
 
 while 1:
     sleep(0.05)
