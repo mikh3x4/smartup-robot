@@ -64,23 +64,16 @@ public:
 
     void init(){
         ip_addr_t ip;
-        ipaddr_aton("172.20.4.1", &ip);
+        ipaddr_aton("172.27.18.1", &ip);
 
         ip_addr_t mask;
-        ipaddr_aton("255.255.0.0", &mask);
-        // netif_set_ipaddr(netif_list, &ip);
+        ipaddr_aton("255.255.255.0", &mask);
 
-        // struct netif *netif = netif_default;
-
-	// ip4_addr_t addr = { .addr = settings->ip_address }
- //        ip4_addr_t mask = { .addr = settings->network_mask };
 	netif_set_addr(netif_default, &ip, &mask, &ip);
 
         printf("IP address: %s\n", ip4addr_ntoa(netif_ip4_addr(netif_list)));
 
 	dhcp_server_init(&dhcp_server, &netif_default->ip_addr, &netif_default->netmask, "bot");
-
-        /// IP STUFF DONE
         
         this->udp_pcb = udp_new();
         this->active_command = &this->command_1;
