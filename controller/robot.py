@@ -234,7 +234,6 @@ class Robot:
 
 
     def disable_servo(self, index):
-        raise NotImplementedError
         index -= 1
         assert 0 <= index <= 3
         self.msg["s"][index] = None

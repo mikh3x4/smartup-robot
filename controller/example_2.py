@@ -39,7 +39,6 @@ while 1:
     # if commands["button_1"]:
     #     robot.set_servo(1, 1500)
     # else:
-    #     robot.set_servo(1, 1800)
     #
     # right = map(-front + side, -1, 1, -1023, 1023)
     # left = map(-front - side, -1, 1, -1023, 1023)

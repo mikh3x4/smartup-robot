@@ -8,25 +8,18 @@ Zrobcie swoj plik do modyfikacji!
 """
 
 from robot import Robot, map
-from gamepad import Gamepad
+# from gamepad import Gamepad
 from time import sleep
 
 # UWAGA: Sprawdzcie czy gamepad jest w trybie ANALOG
-gamepad = Gamepad()
+# gamepad = Gamepad()
 
-# Sprawdzcie IP swojego robota!
-robot = Robot('192.168.5.159')
+robot = Robot()
 
 while 1:
-    sleep(0.05)
+    sleep(1)
 
-    try:
-        commands = gamepad.get()
-    except ConnectionError:
-        robot.estop()
-        continue
-
-    print(commands)
+    robot.set_servo(1, 1800)
 
     robot.start()
 
