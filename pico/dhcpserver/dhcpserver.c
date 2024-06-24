@@ -36,6 +36,10 @@
 #include "dhcpserver.h"
 #include "lwip/udp.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define DHCPDISCOVER    (1)
 #define DHCPOFFER       (2)
 #define DHCPREQUEST     (3)
@@ -296,7 +300,7 @@ ignore_request:
     pbuf_free(p);
 }
 
-void dhcp_server_init(dhcp_server_t *d, ip_addr_t *ip, ip_addr_t *nm, const char *domain_name) {
+void dhcp_server_init(dhcp_server_t *d, ip4_addr_t *ip, ip4_addr_t *nm, const char *domain_name) {
     ip_addr_copy(d->ip, *ip);
     ip_addr_copy(d->nm, *nm);
 	d->domain_name = domain_name;
@@ -310,3 +314,7 @@ void dhcp_server_init(dhcp_server_t *d, ip_addr_t *ip, ip_addr_t *nm, const char
 void dhcp_server_deinit(dhcp_server_t *d) {
     dhcp_socket_free(&d->udp);
 }
+
+#ifdef __cplusplus
+}
+#endif
