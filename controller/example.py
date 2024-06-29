@@ -15,16 +15,16 @@ from time import sleep
 gamepad = Gamepad()
 robot = Robot()
 
-while 1:
+def loop():
     sleep(0.05)
 
     try:
         commands = gamepad.get()
     except ConnectionError:
         robot.estop()
-        continue
-    robot.start()
+        return
 
+    robot.start()
     print(robot.get())
 
     if commands["r1"]:
@@ -36,5 +36,9 @@ while 1:
 
     robot.set_led(0,255,0, 0)
 
-
-
+while 1:
+    try:
+        while 1:
+            loop()
+    finally:
+        robot.estop()
