@@ -140,8 +140,8 @@ class Robot:
             - index: int in range 1-4. Which motor to drive?
             - power: int in range -1024 to 1024. What power to drive it with?
         """
+        assert 1 <= index <= 4
         index -= 1
-        assert 0 <= index <= 3
         assert -1025 <= power <= 1025
         self.msg["m"][index] = ["pwr", int(power)]
         self.udp.set(self.msg)
@@ -152,8 +152,8 @@ class Robot:
         args:
             - index: int in range 1-4. Which motor to stop?
         """
+        assert 1 <= index <= 4
         index -= 1
-        assert 0 <= index <= 3
         self.msg["m"][index] = ["off"]
         self.udp.set(self.msg)
 
@@ -165,8 +165,8 @@ class Robot:
             - angle: int in range 1000 - 2000. Want angle do we want it at?
         """
 
+        assert 1 <= index <= 4
         index -= 1
-        assert 0 <= index <= 3
         assert 500 <= width <= 2500
         self.msg["s"][index] = int(width)
         self.udp.set(self.msg)
@@ -211,9 +211,8 @@ class Robot:
             - power: int in range 0 to 1024 . With what max power to drive to destination
             - encoder_ticks: what encoder position do we want to drive to?
         """
-        # raise NotImplementedError
+        assert 1 <= index <= 4
         index -= 1
-        assert 0 <= index <= 3
         assert 0 <= power <= 1024
         assert type(encoder_ticks) is int
         self.msg["m"][index] = ["dst", power, encoder_ticks]
@@ -226,23 +225,22 @@ class Robot:
             - index: int in range 1-4. Which motor to drive?
             - speed: int in range -3000 to 3000 . What speed to drive it at? (Arbitrary units for now)
         """
-        # raise NotImplementedError
+        assert 1 <= index <= 4
         index -=1
-        assert 0 <= index <= 3
         self.msg["m"][index] = ["spd", speed]
         self.udp.set(self.msg)
 
 
     def disable_servo(self, index):
+        assert 1 <= index <= 4
         index -= 1
-        assert 0 <= index <= 3
         self.msg["s"][index] = None
         self.udp.set(self.msg)
 
     def set_motor_pid(self, index, kp, ki, kd):
         raise NotImplementedError
+        assert 1 <= index <= 4
         index -= 1
-        assert 0 <= index <= 3
 
         setting = self.get_settings_version()
         self.msg["PID"] = [index, kp, ki, kd]
