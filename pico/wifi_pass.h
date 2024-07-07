@@ -3,6 +3,7 @@
 // #define JOIN_WIFI 1
 // #define JOIN_WIFI_SSID "myWifi"
 // #define JOIN_WIFI_PASSWORD "myPassword"
+// YOU WILL ALSO HAVE TO EDIT IP AND MASK IN config_wifi() inside networking.hpp
 
 //REMEMBER TO CHECK/WRITE THE SERIAL NUMBER ON THE PCB
 //IN THE DESEGNATED SPOT!
