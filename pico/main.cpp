@@ -44,16 +44,16 @@ void init(){
 
     ASSERTM(not cyw43_arch_init(), "failed to initialise\n");
 
-    if(1){
-        cyw43_arch_enable_ap_mode("Smartup 1", "testing123", CYW43_AUTH_WPA2_AES_PSK);
-        printf("created WIFI");
-    }else{//used in the past with a centeral access point
+    #ifdef JOIN_WIFI
         cyw43_arch_enable_sta_mode();
 
-        printf("Connecting to %s Wi-Fi...\n", WIFI_SSID);
-        ASSERTM(not cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000), "failed to connect to wifi\n");
-        printf("Connected.\n");
-    }
+        printf("Connecting to %s Wi-Fi...\n", JOIN_WIFI_SSID);
+        ASSERTM(not cyw43_arch_wifi_connect_timeout_ms(JOIN_WIFI_SSID, JOIN_WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000), "failed to connect to wifi\n");
+        printf("Connected\n");
+    #else
+        cyw43_arch_enable_ap_mode(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK);
+        printf("Created WIFI %s\n", WIFI_SSID);
+    #endif
 }
 
 void core1_entry() {

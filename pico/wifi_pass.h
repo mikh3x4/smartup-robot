@@ -1,11 +1,8 @@
 
-//Put your password here
-//you can use
-//git update-index --assume-unchanged wifi_pass.h
-//to prevent git from buging you that it is changed
-
-#define WIFI_SSID "Hamiltopia"
-#define WIFI_PASSWORD "1001dalmatians"
+// UNCOMMENT TO JOIN WIFI INSTEAD OF MAKING ACCESS POINT
+// #define JOIN_WIFI 1
+// #define JOIN_WIFI_SSID "myWifi"
+// #define JOIN_WIFI_PASSWORD "myPassword"
 
 //REMEMBER TO CHECK/WRITE THE SERIAL NUMBER ON THE PCB
 //IN THE DESEGNATED SPOT!

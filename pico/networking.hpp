@@ -73,7 +73,9 @@ public:
 
         printf("IP address: %s\n", ip4addr_ntoa(netif_ip4_addr(netif_list)));
 
+    #ifndef JOIN_WIFI
 	dhcp_server_init(&dhcp_server, &netif_default->ip_addr, &netif_default->netmask, "bot");
+    #endif
     }
 
     void init(){
